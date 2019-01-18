@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.*
+
 buildscript {
     ext.corda_release_group = 'net.corda'
     ext.corda_release_distribution = 'net.corda'
@@ -33,7 +35,8 @@ apply plugin: 'kotlin'
 apply plugin: 'net.corda.plugins.cordapp'
 apply plugin: 'net.corda.plugins.cordformation'
 apply plugin: 'net.corda.plugins.quasar-utils'
-
+apply plugin: 'java'
+apply plugin: 'maven'
 
 sourceSets {
     main {
@@ -50,7 +53,7 @@ sourceSets {
         kotlin {
             compileClasspath += main.output + test.output
             runtimeClasspath += main.output + test.output
-            srcDir file('src/integration-test/kotlin')
+            srcDir file('src/integrationTest/kotlin')
         }
     }
 
@@ -59,6 +62,21 @@ sourceSets {
 configurations {
     integrationTestCompile.extendsFrom testCompile
     integrationTestRuntime.extendsFrom testRuntime
+    contractsStates
+    flows
+    common
+}
+
+artifacts {
+    contractsStates file("${buildDir}/jar/cordapp-contracts-states-${version}.jar")
+}
+
+artifacts {
+    flows file("${buildDir}/jar/cordapp-flows-${version}.jar")
+}
+
+artifacts {
+    common file("${buildDir}/jar/cordapp-common-${version}.jar")
 }
 
 dependencies {
@@ -66,6 +84,8 @@ dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     testCompile "junit:junit:$junit_version"
     compile "com.github.jkcclemens:khttp:-SNAPSHOT"
+    compile "org.jbundle.util:org.jbundle.util.jbackup:2.0.0"
+    compile "net.sf.webtestfixtures:webtestfixtures:2.0.1.3"
 
     // Corda integration dependencies
     cordaCompile "$corda_release_group:corda-core:$corda_release_version"
@@ -83,14 +103,18 @@ dependencies {
     // Specify your CorDapp's dependencies below, including dependent CorDapps.
     // We've defined Cash as a dependent CorDapp as an example.
     cordapp project(":cordapp-contracts-states")
-    cordapp project(":cordapp-hmlr")
-    cordapp "$corda_release_group:corda-finance:$corda_release_version"
+    cordapp project(":cordapp-flows")
+    cordapp project(":cordapp-common")
 }
 
 task integrationTest(type: Test, dependsOn: []) {
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
+    workingDir = "${buildDir}/tests"
 }
+integrationTest.dependsOn('copyConfig')
+
+tasks.test.dependsOn('copyConfig')
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
@@ -102,17 +126,26 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
 }
 
 task copyConfig() {
-    copy {
-        from("${projectDir}/configuration.properties")
-        into("${buildDir}/nodes/HMLR")
-    }
-    copy {
-        from("${projectDir}/configuration.properties")
-        into("${buildDir}/nodes/Conveyancer A")
-    }
-    copy {
-        from("${projectDir}/configuration.properties")
-        into("${buildDir}/nodes/Conveyancer B")
+    doLast {
+        [
+                ["${buildDir}/nodes/HMLR", true],
+                ["${buildDir}/nodes/Conveyancer1", false],
+                ["${buildDir}/nodes/Conveyancer2", false],
+                ["${buildDir}/nodes/Lender1", false],
+                ["${buildDir}/nodes/Lender2", false],
+                ["${buildDir}/tests", true]
+        ].each { dest ->
+            copy {
+                from("${projectDir}/configuration.properties")
+                into("${dest[0]}")
+
+                if (dest[1]) {
+                    filter(ReplaceTokens, tokens: [
+                            configurationTitleApiUrl: "${-> project.titleApiUrl}".toString()
+                    ])
+                }
+            }
+        }
     }
 }
 
@@ -125,6 +158,7 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         cordapps = []
 
     }
+
     node {
         name "O=HMLR,L=Plymouth,C=GB"
         p2pPort 10005
@@ -134,13 +168,14 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         }
         cordapps = [
                 "$project.group:cordapp-contracts-states:$project.version",
-                "$project.group:cordapp-hmlr:$project.version",
-                "$corda_release_group:corda-finance:$corda_release_version"
+                "$project.group:cordapp-flows:$project.version",
+                "$project.group:cordapp-common:$project.version"
         ]
         rpcUsers = [[user: "user1", "password": "test", "permissions": ["ALL"]]]
     }
+
     node {
-        name "O=Conveyancer A,L=Plymouth,C=GB"
+        name "O=Conveyancer1,L=Plymouth,C=GB"
         p2pPort 10008
         rpcSettings {
             address("0.0.0.0:10009")
@@ -148,13 +183,14 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         }
         cordapps = [
                 "$project.group:cordapp-contracts-states:$project.version",
-                "$project.group:cordapp-hmlr:$project.version",
-                "$corda_release_group:corda-finance:$corda_release_version"
+                "$project.group:cordapp-flows:$project.version",
+                "$project.group:cordapp-common:$project.version"
         ]
         rpcUsers = [[user: "user1", "password": "test", "permissions": ["ALL"]]]
     }
+
     node {
-        name "O=Conveyancer B,L=Plymouth,C=GB"
+        name "O=Conveyancer2,L=Plymouth,C=GB"
         p2pPort 10011
         rpcSettings {
             address("0.0.0.0:10012")
@@ -162,11 +198,58 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         }
         cordapps = [
                 "$project.group:cordapp-contracts-states:$project.version",
-                "$project.group:cordapp-hmlr:$project.version",
-                "$corda_release_group:corda-finance:$corda_release_version"
+                "$project.group:cordapp-flows:$project.version",
+                "$project.group:cordapp-common:$project.version"
+        ]
+        rpcUsers = [[user: "user1", "password": "test", "permissions": ["ALL"]]]
+    }
+    node {
+        name "O=Lender1,L=Plymouth,C=GB"
+        p2pPort 10014
+        rpcSettings {
+            address("0.0.0.0:10015")
+            adminAddress("0.0.0.0:10415")
+        }
+        cordapps = [
+                "$project.group:cordapp-contracts-states:$project.version",
+                "$project.group:cordapp-flows:$project.version",
+                "$project.group:cordapp-common:$project.version"
+        ]
+        rpcUsers = [[user: "user1", "password": "test", "permissions": ["ALL"]]]
+    }
+    node {
+        name "O=Lender2,L=Plymouth,C=GB"
+        p2pPort 10017
+        rpcSettings {
+            address("0.0.0.0:10018")
+            adminAddress("0.0.0.0:10418")
+        }
+        cordapps = [
+                "$project.group:cordapp-contracts-states:$project.version",
+                "$project.group:cordapp-flows:$project.version",
+                "$project.group:cordapp-common:$project.version"
         ]
         rpcUsers = [[user: "user1", "password": "test", "permissions": ["ALL"]]]
     }
 
     deployNodes.finalizedBy copyConfig
 }
+
+jar {
+
+    doLast {
+        copy {
+            from(project(':cordapp-contracts-states').jar.outputs.files.getFiles())
+            into("${buildDir}/jar")
+        }
+        copy {
+            from(project(':cordapp-flows').jar.outputs.files.getFiles())
+            into("${buildDir}/jar")
+        }
+        copy {
+            from(project(':cordapp-common').jar.outputs.files.getFiles())
+            into("${buildDir}/jar")
+        }
+    }
+}
+//hello

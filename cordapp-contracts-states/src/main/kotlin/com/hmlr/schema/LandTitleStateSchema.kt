@@ -1,12 +1,10 @@
 package com.hmlr.schema
 
-import net.corda.core.contracts.UniqueIdentifier
+
 import net.corda.core.schemas.MappedSchema
 import net.corda.core.schemas.PersistentState
-import java.util.*
 import javax.persistence.Column
 import javax.persistence.Entity
-import javax.persistence.Persistence
 import javax.persistence.Table
 
 /**
@@ -15,7 +13,7 @@ import javax.persistence.Table
 object LandTitleStateSchema
 
 /**
-* First version of the Schema class that is ORM into Corda RDMS for efficient queries
+* First version of the [LandTitleStateSchema] class that is ORM into Corda RDMS for efficient queries
 *
 */
 object LandTitleStateSchemaV1: MappedSchema(
@@ -32,11 +30,11 @@ object LandTitleStateSchemaV1: MappedSchema(
             @Column(name = "issuer")
             var issuerName: String?,
 
-            @Column(name = "owner_first_name")
-            var ownerFirstName: String,
+            @Column(name = "owner_forename")
+            var ownerForename: String,
 
-            @Column(name = "owner_last_name")
-            var ownerLastName: String,
+            @Column(name = "owner_surname")
+            var ownerSurname: String,
 
             @Column(name = "owner_id")
             var ownerID: String,

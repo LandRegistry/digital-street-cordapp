@@ -13,7 +13,7 @@ import net.corda.core.schemas.QueryableState
 import java.util.*
 
 /**
- * Data class representing Land Asset on Corda ledger.
+ * Data class to represent Land Asset on Corda ledger.
  * It represents only a working copy of the data for PoC purpose.
  */
 data class LandTitleState(val titleID: String,
@@ -22,18 +22,24 @@ data class LandTitleState(val titleID: String,
                           val titleType: TitleType,
                           val lastSoldValue: Amount<Currency>?,
                           val status: LandTitleStatus,
+                          val restrictions: Set<Restriction>,
+                          val charges: Set<Charge>,
+                          val proposedChargeOrRestrictionLinearId: String,
                           override val linearId: UniqueIdentifier = UniqueIdentifier(),
-                          override val participants: List<AbstractParty> = listOf(titleIssuer, landTitleProperties.ownerConveyancer!!))
+                          override val participants: List<AbstractParty> = listOf(titleIssuer, landTitleProperties.ownerConveyancer,landTitleProperties.ownerLender))
     :LinearState, QueryableState {
 
+    /**
+     * ORM schema mapping
+     */
     override fun generateMappedObject(schema: MappedSchema): PersistentState {
         return when (schema) {
                 is LandTitleStateSchemaV1 -> LandTitleStateSchemaV1.PersistentLandTitle(
                         titleID = this.titleID,
                         issuerName = this.titleIssuer.name.commonName,
-                        ownerFirstName = this.landTitleProperties.owner!!.forename,
-                        ownerLastName = this.landTitleProperties.owner!!.surname,
-                        ownerID = this.landTitleProperties.owner!!.userID,
+                        ownerForename = this.landTitleProperties.owner.forename,
+                        ownerSurname = this.landTitleProperties.owner.surname,
+                        ownerID = this.landTitleProperties.owner.userID,
                         houseNumber = this.landTitleProperties.address.houseNumber,
                         streetName = this.landTitleProperties.address.streetName,
                         city = this.landTitleProperties.address.city,
@@ -45,6 +51,5 @@ data class LandTitleState(val titleID: String,
             else -> throw IllegalArgumentException("Unrecognised schema $schema")
         }
     }
-
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(LandTitleStateSchemaV1)
 }

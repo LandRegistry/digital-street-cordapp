@@ -26,7 +26,7 @@ sourceSets {
         kotlin {
             compileClasspath += main.output + test.output
             runtimeClasspath += main.output + test.output
-            srcDir file('src/integration-test/kotlin')
+            srcDir file('src/integrationTest/kotlin')
         }
     }
 }

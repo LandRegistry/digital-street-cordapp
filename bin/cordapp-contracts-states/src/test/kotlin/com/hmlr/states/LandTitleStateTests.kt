@@ -1,11 +1,10 @@
 package com.hmlr.states
 
-import com.hmlr.ALICE
-import com.hmlr.BOB
-import com.hmlr.landTitleState
 import com.hmlr.model.CustomParty
 import com.hmlr.model.Address
 import com.hmlr.model.LandTitleStatus
+import com.hmlr.AbstractContractsStatesTestUtils
+import com.hmlr.model.Restriction
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.LinearState
 import net.corda.core.contracts.UniqueIdentifier
@@ -15,14 +14,14 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
 
-class LandTitleStateTests {
+class LandTitleStateTests : AbstractContractsStatesTestUtils() {
 
     /**
      * Test 1.
      *
      */
     @Test
-    fun `hasTitleIDFieldOfCorrectType`() {
+    fun `has TitleID Field Of Correct Type`() {
         // Does the titleID field exist?
         LandTitleState::class.java.getDeclaredField("titleID")
         // Is the titleID field of the correct type?
@@ -34,7 +33,7 @@ class LandTitleStateTests {
      *
      * */
     @Test
-    fun hasLocationFieldOfCorrectType(){
+    fun `has Location Field Of Correct Type`() {
         // Does the location field exist?
         var propClass =  LandTitleState::class.java.getDeclaredField("landTitleProperties").type
         // Is the location field of the correct type?
@@ -46,7 +45,7 @@ class LandTitleStateTests {
      *
      */
     @Test
-    fun hasDelegatedFieldOfCorrectType() {
+    fun `has Delegated Field Of Correct Type`() {
         // Does the delegatedParty field exist?
         var propClass =  LandTitleState::class.java.getDeclaredField("landTitleProperties").type
         // Is the delegatedParty field of the correct type?
@@ -58,7 +57,7 @@ class LandTitleStateTests {
      *
      */
     @Test
-    fun hasOwnerFieldOfCorrectType() {
+    fun `has Owner Field Of Correct Type`() {
         // Does the location field exist?
         var propClass =  LandTitleState::class.java.getDeclaredField("landTitleProperties").type
         // Is the location field of the correct type?
@@ -70,7 +69,7 @@ class LandTitleStateTests {
      *
      */
     @Test
-    fun hasIssuerFieldOfCorrectType() {
+    fun `has Issuer Field Of Correct Type`() {
         // Does the lender field exist?
         LandTitleState::class.java.getDeclaredField("titleIssuer")
         // Is the issuer field of the correct type?
@@ -83,7 +82,7 @@ class LandTitleStateTests {
      *
      */
     @Test
-    fun issuerIsParticipant() {
+    fun `issuer Is Participant`() {
         assertNotEquals(landTitleState.participants.indexOf(ALICE.party), -1)
     }
 
@@ -92,7 +91,7 @@ class LandTitleStateTests {
      *
      */
     @Test
-    fun delegatedPartyIsParticipant() {
+    fun `delegatedParty Is Participant`() {
         assertNotEquals(landTitleState.participants.indexOf(BOB.party), -1)
     }
 
@@ -101,7 +100,7 @@ class LandTitleStateTests {
      *
      */
     @Test
-    fun isLinearState() {
+    fun `is LinearState`() {
         assert(LinearState::class.java.isAssignableFrom(landTitleState::class.java))
     }
 
@@ -110,7 +109,7 @@ class LandTitleStateTests {
      *
      */
     @Test
-    fun hasLinearIdFieldOfCorrectType() {
+    fun `has LinearId Field Of Correct Type`() {
         // Does the linearId field exist?
         LandTitleState::class.java.getDeclaredField("linearId")
         // Is the linearId field of the correct type?
@@ -123,10 +122,10 @@ class LandTitleStateTests {
      *
      */
     @Test
-    fun hasOfferPriceFieldOfCorrectType() {
-        // Does the location field exist?
-        var propClass =  LandTitleState::class.java.getDeclaredField("lastSoldValue").type
-        // Is the location field of the correct type?
+    fun `has OfferPrice Field Of Correct Type`() {
+        // Does the lastSoldValue field exist?
+        val propClass =  LandTitleState::class.java.getDeclaredField("lastSoldValue").type
+        // Is the lastSoldValue field of the correct type?
         assertEquals(propClass, Amount::class.java)
     }
 
@@ -135,10 +134,47 @@ class LandTitleStateTests {
      *
      */
     @Test
-    fun hasStatusFieldOfCorrectType() {
-        // Does the location field exist?
-        var propClass =  LandTitleState::class.java.getDeclaredField("status").type
-        // Is the location field of the correct type?
+    fun `has Status Field Of Correct Type`() {
+        // Does the status field exist?
+        val propClass =  LandTitleState::class.java.getDeclaredField("status").type
+        // Is the status field of the correct type?
         assertEquals(propClass, LandTitleStatus::class.java)
+    }
+
+
+    /**
+     * Test 12.
+     *
+     */
+    @Test
+    fun `has Charge Field Of Correct Type`() {
+        // Does the charges field exist?
+        val propClass =  LandTitleState::class.java.getDeclaredField("charges").type
+        // Is the charges field of the correct type?
+        assertEquals(propClass, Set::class.java)
+    }
+
+    /**
+     * Test 13.
+     *
+     */
+    @Test
+    fun `has Restriction Field Of Correct Type`() {
+        // Does the restrictions field exist?
+        val propClass =  LandTitleState::class.java.getDeclaredField("restrictions").type
+        // Is the restrictions field of the correct type?
+        assertEquals(propClass, Set::class.java)
+    }
+
+    /**
+     * Test 14.
+     *
+     */
+    @Test
+    fun `has proposedChargeOrRestrictionLinearId Field Of Correct Type`() {
+        // Does the proposedChargeOrRestrictionLinearId field exist?
+        val propClass =  LandTitleState::class.java.getDeclaredField("proposedChargeOrRestrictionLinearId").type
+        // Is the proposedChargeOrRestrictionLinearId field of the correct type?
+        assertEquals(propClass, String::class.java)
     }
 }

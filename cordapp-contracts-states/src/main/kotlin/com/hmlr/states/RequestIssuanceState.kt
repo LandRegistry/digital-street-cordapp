@@ -8,8 +8,7 @@ import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
 
 /**
- * Data class representing Request for issuance state on Corda ledger.
- *
+ * Data class to represent request for issuance state on Corda ledger.
  */
 data class RequestIssuanceState(
             val titleID: String,
@@ -17,6 +16,6 @@ data class RequestIssuanceState(
             val sellerConveyancer: Party,
             val seller: CustomParty,
             val status: RequestIssuanceStatus,
+            val instructionStateLinearID: String?,
             override val linearId: UniqueIdentifier = UniqueIdentifier(),
-            override val participants: List<AbstractParty> = listOf(titleIssuer, sellerConveyancer))
-            :LinearState
+            override val participants: List<AbstractParty> = listOf(titleIssuer, sellerConveyancer)): LinearState

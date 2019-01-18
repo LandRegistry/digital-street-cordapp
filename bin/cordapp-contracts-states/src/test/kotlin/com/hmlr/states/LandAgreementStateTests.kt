@@ -1,6 +1,6 @@
 package com.hmlr.states
 
-import com.hmlr.*
+import com.hmlr.AbstractContractsStatesTestUtils
 import com.hmlr.model.AgreementStatus
 import com.hmlr.model.CustomParty
 import com.hmlr.model.TitleGuarantee
@@ -8,17 +8,18 @@ import net.corda.core.contracts.Amount
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.identity.Party
 import org.junit.Test
+import java.time.Instant
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-class LandAgreementStateTests {
+class LandAgreementStateTests : AbstractContractsStatesTestUtils() {
 
     /**
      * Test 1.
      */
     @Test
-    fun hasTitleIDFieldOfCorrectType() {
+    fun `has TitleID Field Of Correct Type`() {
         // Does the titleID field exist?
         LandAgreementState::class.java.getDeclaredField("titleID")
         // Is the titleID field of the correct type?
@@ -29,7 +30,7 @@ class LandAgreementStateTests {
      * Test 2.
      */
     @Test
-    fun hasBuyerFieldOfCorrectType() {
+    fun `has Buyer Field Of Correct Type`() {
         // Does the buyer field exist?
         LandAgreementState::class.java.getDeclaredField("buyer")
         // Is the buyer field of the correct type?
@@ -40,7 +41,7 @@ class LandAgreementStateTests {
      * Test 3.
      */
     @Test
-    fun hasSellerFieldOfCorrectType() {
+    fun `has Seller Field Of Correct Type`() {
         // Does the seller field exists
         LandAgreementState::class.java.getDeclaredField("seller")
         // Is the seller field of the correct type?
@@ -51,7 +52,7 @@ class LandAgreementStateTests {
      * Test 4.
      */
     @Test
-    fun hasBuyerConveyancerFieldOfCorrectType() {
+    fun `has Buyer Conveyancer Field Of Correct Type`() {
         // Does the buyerConveyancer field exists
         LandAgreementState::class.java.getDeclaredField("buyerConveyancer")
         // Is the buyerConveyancer field of the correct type?
@@ -62,7 +63,7 @@ class LandAgreementStateTests {
      * Test 5.
      */
     @Test
-    fun hasSellerConveyancerFieldOfCorrectType() {
+    fun `has Seller Conveyancer Field Of Correct Type`() {
         // Does the sellerConveyancer field exists
         LandAgreementState::class.java.getDeclaredField("sellerConveyancer")
         // Is the sellerConveyancer field of the correct type?
@@ -73,7 +74,7 @@ class LandAgreementStateTests {
      * Test 6.
      */
     @Test
-    fun hasCreationDateFieldOfCorrectType() {
+    fun `has CreationDate Field Of Correct Type`() {
         // Does the creationDate field exists
         LandAgreementState::class.java.getDeclaredField("creationDate")
         // Is the creationDate field of the correct type?
@@ -84,18 +85,18 @@ class LandAgreementStateTests {
      * Test 7.
      */
     @Test
-    fun hasCompletionDateFieldOfCorrectType() {
+    fun `has CompletionDate Field Of Correct Type`() {
         // Does the completionDate field exists
         LandAgreementState::class.java.getDeclaredField("completionDate")
         // Is the completionDate field of the correct type?
-        assertEquals(LandAgreementState::class.java.getDeclaredField("completionDate").type, LocalDate::class.java)
+        assertEquals(LandAgreementState::class.java.getDeclaredField("completionDate").type, Instant::class.java)
     }
 
     /**
      * Test 8.
      */
     @Test
-    fun hasContractRateFieldOfCorrectType() {
+    fun `has ContractRate Field Of Correct Type`() {
         // Does the contractRate field exists
         LandAgreementState::class.java.getDeclaredField("contractRate")
         // Is the contractRate field of the correct type?
@@ -106,7 +107,7 @@ class LandAgreementStateTests {
      * Test 9.
      */
     @Test
-    fun hasPurchasePriceFieldOfCorrectType() {
+    fun `has PurchasePrice Field Of Correct Type`() {
         // Does the purchasePrice field exists
         LandAgreementState::class.java.getDeclaredField("purchasePrice")
         // Is the purchasePrice field of the correct type?
@@ -117,7 +118,7 @@ class LandAgreementStateTests {
      * Test 10.
      */
     @Test
-    fun hasDepositFieldOfCorrectType() {
+    fun `has Deposit Field Of Correct Type`() {
         // Does the deposit field exists
         LandAgreementState::class.java.getDeclaredField("deposit")
         // Is the deposit field of the correct type?
@@ -128,7 +129,7 @@ class LandAgreementStateTests {
      * Test 11.
      */
     @Test
-    fun hasContentsPriceFieldOfCorrectType() {
+    fun `has ContentsPrice Field Of Correct Type`() {
         // Does the contentsPrice field exists
         LandAgreementState::class.java.getDeclaredField("contentsPrice")
         // Is the contentsPrice field of the correct type?
@@ -139,7 +140,7 @@ class LandAgreementStateTests {
      * Test 12.
      */
     @Test
-    fun hasBalanceFieldOfCorrectType() {
+    fun `has Balance Field Of Correct Type`() {
         // Does the balance field exists
         LandAgreementState::class.java.getDeclaredField("balance")
         // Is the balance field of the correct type?
@@ -150,7 +151,7 @@ class LandAgreementStateTests {
      * Test 13.
      */
     @Test
-    fun hasTitleStateLinearIdFieldOfCorrectType() {
+    fun `has TitleStateLinearId Field Of Correct Type`() {
         // Does the titleStateLinearId field exists
         LandAgreementState::class.java.getDeclaredField("titleStateLinearId")
         // Is the titleStateLinearId field of the correct type?
@@ -161,7 +162,7 @@ class LandAgreementStateTests {
      * Test 14.
      */
     @Test
-    fun hasSpecificIncumbrancesFieldOfCorrectType() {
+    fun `has SpecificIncumbrances Field Of Correct Type`() {
         // Does the specificIncumbrances field exists
         LandAgreementState::class.java.getDeclaredField("specificIncumbrances")
         // Is the specificIncumbrances field of the correct type?
@@ -172,7 +173,7 @@ class LandAgreementStateTests {
      * Test 15.
      */
     @Test
-    fun hasAgreementStatusFieldOfCorrectType() {
+    fun `has AgreementStatus Field Of Correct Type`() {
         // Does the status field exists
         LandAgreementState::class.java.getDeclaredField("status")
         // Is the status field of the correct type?
@@ -183,7 +184,7 @@ class LandAgreementStateTests {
      * Test 16.
      */
     @Test
-    fun hasLinearIdFieldOfCorrectType() {
+    fun `has LinearId Field Of Correct Type`() {
         // Does the linearId field exist?
         LandAgreementState::class.java.getDeclaredField("linearId")
         // Is the linearId field of the correct type?
@@ -194,7 +195,7 @@ class LandAgreementStateTests {
      * Test 17.
      */
     @Test
-    fun isLinearState() {
+    fun `is LinearState`() {
         assert(LandAgreementState::class.java.isAssignableFrom(agreementState::class.java))
     }
 
@@ -203,7 +204,7 @@ class LandAgreementStateTests {
      *
      */
     @Test
-    fun buyerConveyancerIsParticipant() {
+    fun `buyer Conveyancer Is Participant`() {
         assertNotEquals(agreementState.participants.indexOf(CHARLIE.party), -1)
     }
 
@@ -212,7 +213,7 @@ class LandAgreementStateTests {
      *
      */
     @Test
-    fun sellerConveyancerIsParticipant() {
+    fun `seller Conveyancer Is Participant`() {
         assertNotEquals(agreementState.participants.indexOf(BOB.party), -1)
     }
 
@@ -221,11 +222,23 @@ class LandAgreementStateTests {
      *
      */
     @Test
-    fun hasTitleGuaranteeFieldOfCorrectType() {
+    fun `has TitleGuarantee Field Of Correct Type`() {
         // Does the TitleGuarantee field exists
         LandAgreementState::class.java.getDeclaredField("titleGuarantee")
         // Is the TitleGuarantee field of the correct type?
         assertEquals(LandAgreementState::class.java.getDeclaredField("titleGuarantee").type, TitleGuarantee::class.java)
 
+    }
+
+    /**
+     * Test 21.
+     *
+     */
+    @Test
+    fun `has isMortgageTermsAdded Field Of Correct Type`() {
+        // Does the status field exists
+        LandAgreementState::class.java.getDeclaredField("isMortgageTermsAdded")
+        // Is the status field of the correct type?
+        assertEquals(LandAgreementState::class.java.getDeclaredField("isMortgageTermsAdded").type, Boolean::class.java)
     }
 }
