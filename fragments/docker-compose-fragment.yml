@@ -1,0 +1,24 @@
+version: '2'
+services:
+  # Notice how the service name, container name and repo directory (where the Dockerfile lives) all match.
+  digital-street-cordapp:
+    container_name: digital-street-cordapp
+    build: ${PWD}/apps/digital-street-cordapp
+    restart: on-failure
+    ports:
+      # The base Flask Dockerfile tells gunicorn to use 8080 by default, we expose it here and map it to a unique 
+      # port for the app (which is subsequently used by the dev-env to forward it outside of vagrant too).
+      - "7007:8080"
+    volumes:
+      # Our convention is (for python) to always map the app files to /src within the container
+      - ${PWD}/apps/digital-street-cordapp:/src
+    # Redirect all the logs to a logstash server. Logstash is set up to parse RFC5424 format messages.
+    logging:
+      driver: syslog
+      options:
+        syslog-format: "rfc5424"
+        syslog-address: "tcp://localhost:25826"
+        tag: "{{.Name}}"
+    # Docker-compose will ensure logstash is started before the application starts.
+    depends_on:
+      - logstash
