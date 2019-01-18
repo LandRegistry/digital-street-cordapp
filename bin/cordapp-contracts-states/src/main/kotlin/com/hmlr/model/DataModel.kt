@@ -8,9 +8,7 @@ import java.security.PublicKey
 @CordaSerializable
 data class LandTitleProperties(val address: Address,
                                val ownerConveyancer: Party?,
-                               val owner: CustomParty?,
-                               val buyer: CustomParty?,
-                               val buyerConveyancer: Party?)
+                               val owner: CustomParty?)
 
 @CordaSerializable
 data class Address( val houseNumber:String,
@@ -23,7 +21,7 @@ data class Address( val houseNumber:String,
 @CordaSerializable
 data class CustomParty(val forename: String,
                        val surname: String,
-                       val NIN: String,
+                       val userID: String,
                        val address: Address,
                        val userType: UserType,
                        val email: String,
@@ -52,10 +50,11 @@ enum class UserType {
     OVERSEAS_COMPANY,
     NGO
 }
+
 @CordaSerializable
-enum class Status {
+enum class LandTitleStatus {
     ISSUED,
-    PENDING_BUYER_APPROVAL,
+    ASSIGN_BUYER_CONVEYANCER,
     TRANSFERRED
 }
 
@@ -65,5 +64,19 @@ enum class RequestIssuanceStatus {
     APPROVED,
     TITLE_ALREADY_ISSUED,
     FAILED
+}
+
+@CordaSerializable
+enum class AgreementStatus {
+    CREATED,
+    APPROVED,
+    SIGNED,
+    COMPLETED
+}
+
+@CordaSerializable
+enum class TitleGuarantee {
+    LIMITED,
+    FULL
 }
 

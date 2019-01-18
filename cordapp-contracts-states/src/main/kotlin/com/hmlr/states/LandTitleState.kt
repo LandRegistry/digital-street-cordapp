@@ -1,9 +1,6 @@
 package com.hmlr.states
 
-import com.hmlr.model.Attachments
-import com.hmlr.model.LandTitleProperties
-import com.hmlr.model.Status
-import com.hmlr.model.TitleType
+import com.hmlr.model.*
 import com.hmlr.schema.LandTitleStateSchemaV1
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.LinearState
@@ -22,10 +19,9 @@ import java.util.*
 data class LandTitleState(val titleID: String,
                           val landTitleProperties: LandTitleProperties,
                           val titleIssuer: Party,
-                          val referenceDocuments: List<Attachments>?,
                           val titleType: TitleType,
                           val lastSoldValue: Amount<Currency>?,
-                          val status: Status,
+                          val status: LandTitleStatus,
                           override val linearId: UniqueIdentifier = UniqueIdentifier(),
                           override val participants: List<AbstractParty> = listOf(titleIssuer, landTitleProperties.ownerConveyancer!!))
     :LinearState, QueryableState {
@@ -36,8 +32,8 @@ data class LandTitleState(val titleID: String,
                         titleID = this.titleID,
                         issuerName = this.titleIssuer.name.commonName,
                         ownerFirstName = this.landTitleProperties.owner!!.forename,
-                        ownerLastName = this.landTitleProperties.owner.surname,
-                        ownerNIN = this.landTitleProperties.owner.NIN,
+                        ownerLastName = this.landTitleProperties.owner!!.surname,
+                        ownerID = this.landTitleProperties.owner!!.userID,
                         houseNumber = this.landTitleProperties.address.houseNumber,
                         streetName = this.landTitleProperties.address.streetName,
                         city = this.landTitleProperties.address.city,

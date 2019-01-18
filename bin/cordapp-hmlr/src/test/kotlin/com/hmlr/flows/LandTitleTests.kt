@@ -1,13 +1,14 @@
 package com.hmlr.flows
 
 import com.hmlr.model.*
+import com.hmlr.states.LandAgreementState
 import com.hmlr.states.LandTitleState
 import com.hmlr.states.RequestIssuanceState
-import net.corda.core.concurrent.CordaFuture
 import net.corda.core.crypto.Crypto
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.utilities.getOrThrow
+import net.corda.finance.POUNDS
 import net.corda.testing.core.singleIdentity
 import net.corda.testing.node.MockNetwork
 import net.corda.testing.node.MockNodeParameters
@@ -15,6 +16,7 @@ import net.corda.testing.node.StartedMockNode
 import org.junit.After
 import org.junit.Before
 import java.security.PrivateKey
+import java.time.LocalDate
 
 /**
  * A base class to reduce the boilerplate when writing land title flow tests.
@@ -26,6 +28,7 @@ abstract class LandTitleTests {
     lateinit var buyerConveyancer: StartedMockNode
     lateinit var hmrc: StartedMockNode
 
+    val wrongUser = Crypto.generateKeyPair(Crypto.RSA_SHA256)
     val buyerKeys = Crypto.generateKeyPair(Crypto.RSA_SHA256)
     val sellerKeys = Crypto.generateKeyPair(Crypto.RSA_SHA256)
     val buyerPublicKey = buyerKeys.public
@@ -34,8 +37,9 @@ abstract class LandTitleTests {
     val sellerPrivateKey = sellerKeys.private
     val titleId = "ZQV888860"
     val invalidTitleId = "0000000000"
-    val location = Address("A1-S2", "GreenBank Road", "Devon", "Plymouth", "UK", "PL6 5ZD")
-    val seller = CustomParty("Nitesh", "Solanki", "125464", location, UserType.INDIVIDUAL, "nits7sid@example.com", "9422327871", true, signature = null, publicKey = sellerPublicKey)
+    val location = Address("10", "Digital Street", "Avon", "Bristol", "United Kingdom", "BS2 8EN")
+    val seller = CustomParty("Lisa", "White", "1230", location, UserType.INDIVIDUAL, "Lisa.White@example.com", "07123456780", true, signature = null, publicKey = sellerPublicKey)
+    val buyer = CustomParty("David", "Jones", "125464", location, UserType.INDIVIDUAL, "buyer@example.com", "0123456789", true, signature = null, publicKey = buyerPublicKey)
 
 
 
@@ -85,33 +89,79 @@ abstract class LandTitleTests {
         return recordedTx
     }
 
-    protected fun landTitleTransferRequest(): CordaFuture<SignedTransaction>? {
-        val location = Address("A1-S2","GreenBank Road","Devon","PL6", "UK", "PL6 5ZD")
-        val buyingParty  = CustomParty("Nitesh", "Solanki", "125464", location, UserType.INDIVIDUAL, "nitesh@example.com","9876543210",true,publicKey = buyerPublicKey,signature = null)
-        val acceptingParty = buyerConveyancer.info.singleIdentity()
+    protected fun createDraftAgreement(callingParty: StartedMockNode): SignedTransaction? {
         requestForIssuance()
         mockNetwork.waitQuiescent()
-        return sellerConveyancer.transaction {
-            val txOutputs = sellerConveyancer.services.vaultService.queryBy(LandTitleState::class.java).states
-            val recordedState = txOutputs[0].state.data
-            val transferFlow = TransferLandTitleRequest(recordedState.linearId.toString(), buyingParty, acceptingParty, sign(recordedState.titleID, sellerPrivateKey))
-            val future = sellerConveyancer.startFlow(transferFlow)
-            mockNetwork.runNetwork()
-            future
+
+        // fetch the titleID of the land title state from seller conveyancer
+        var titleID: String? = null
+        var owner: CustomParty? = null
+
+        sellerConveyancer.transaction {
+            val states = sellerConveyancer.services.vaultService.queryBy(LandTitleState::class.java).states
+            titleID = states[0].state.data.linearId.toString()
+            owner = states[0].state.data.landTitleProperties.owner!!
         }
+        val ownerConveyancer = sellerConveyancer.info.singleIdentity()
+        val buyerConveyancer = buyerConveyancer.info.singleIdentity()
+        val agreementState = LandAgreementState(titleId, buyer, owner!!, buyerConveyancer, ownerConveyancer, LocalDate.now(), LocalDate.now().plusDays(14), 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, titleID!!, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED)
+        val flow = DraftAgreement(agreementState, buyerConveyancer)
+        val future = callingParty.startFlow(flow)
+        mockNetwork.runNetwork()
+        return future.getOrThrow()
     }
 
-    protected fun landTitleTransferResponse(): CordaFuture<SignedTransaction>? {
-        requestForIssuance()
-        landTitleTransferRequest()
+    protected fun approveLandAgreement(callingParty: StartedMockNode): SignedTransaction {
+        createDraftAgreement(sellerConveyancer)
         mockNetwork.waitQuiescent()
-        return buyerConveyancer.transaction {
-            val txOutputs = buyerConveyancer.services.vaultService.queryBy(LandTitleState::class.java).states
-            val recordedState = txOutputs[0].state.data
-            val responseFlow = TransferLandTitleResponse(recordedState.linearId.toString(),sign(recordedState.titleID, buyerPrivateKey))
-            val future = buyerConveyancer.startFlow(responseFlow)
-            mockNetwork.runNetwork()
-            future
+
+        // fetch the linearID of the agreement state from seller conveyancer
+        var linearID: String? = null
+
+        callingParty.transaction {
+            val states = callingParty.services.vaultService.queryBy(LandAgreementState::class.java).states
+            linearID = states[0].state.data.linearId.toString()
         }
+
+        val flow = ApproveAgreement(linearID!!)
+        val future = callingParty.startFlow(flow)
+        mockNetwork.runNetwork()
+        return future.getOrThrow()
+    }
+
+    protected fun sellerSignAgreement(callingParty: StartedMockNode, privateKey: PrivateKey): SignedTransaction {
+        approveLandAgreement(buyerConveyancer)
+        mockNetwork.waitQuiescent()
+
+        // fetch the linearID of the agreement state from seller conveyancer
+        var linearID: String? = null
+
+        callingParty.transaction {
+            val states = callingParty.services.vaultService.queryBy(LandAgreementState::class.java).states
+            linearID = states[0].state.data.linearId.toString()
+        }
+
+        val flow = SellerSignAgreement(linearID!!, sign(titleId, privateKey))
+        val future = callingParty.startFlow(flow)
+        mockNetwork.runNetwork()
+        return future.getOrThrow()
+    }
+
+    protected fun buyerSignAgreement(callingParty: StartedMockNode, privateKey: PrivateKey): SignedTransaction {
+        sellerSignAgreement(sellerConveyancer, sellerPrivateKey)
+        mockNetwork.waitQuiescent()
+
+        // fetch the linearID of the agreement state from buyer conveyancer
+        var linearID: String? = null
+
+        callingParty.transaction {
+            val states = callingParty.services.vaultService.queryBy(LandAgreementState::class.java).states
+            linearID = states[0].state.data.linearId.toString()
+        }
+
+        val flow = BuyerSignAgreement(linearID!!, sign(titleId, privateKey))
+        val future = callingParty.startFlow(flow)
+        mockNetwork.runNetwork()
+        return future.getOrThrow()
     }
 }

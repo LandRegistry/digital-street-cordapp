@@ -1,10 +1,10 @@
 package com.hmlr.contracts
 
-import com.hmlr.model.Status
+import com.hmlr.model.LandTitleStatus
+import com.hmlr.states.LandAgreementState
 import com.hmlr.states.LandTitleState
 import com.hmlr.states.RequestIssuanceState
 import net.corda.core.contracts.*
-import net.corda.core.crypto.Crypto
 import net.corda.core.transactions.LedgerTransaction
 import java.security.PublicKey
 
@@ -21,8 +21,8 @@ class LandTitleContract: Contract {
 
     interface Commands: CommandData{
         class IssueLandTitle: TypeOnlyCommandData(), Commands
-        class LandTitleTransferRequest: TypeOnlyCommandData(), Commands
-        class LandTitleTransferResponse: TypeOnlyCommandData(), Commands
+        class TransferLandTitle: TypeOnlyCommandData(), Commands
+        class AssignBuyerConveyancer: TypeOnlyCommandData(), Commands
     }
 
     override fun verify(tx: LedgerTransaction) {
@@ -30,8 +30,9 @@ class LandTitleContract: Contract {
         val setOfSigners = commands.signers.toSet()
         when (commands.value){
             is Commands.IssueLandTitle -> verifyIssueLandTitle(tx, setOfSigners)
-            is Commands.LandTitleTransferRequest -> verifyLandTitleTransferRequest(tx)
-            is Commands.LandTitleTransferResponse -> verifyLandTitleTransferResponse(tx)
+            is Commands.AssignBuyerConveyancer -> verifyAssignBuyerConveyancer(tx, setOfSigners)
+            is Commands.TransferLandTitle -> verifyTransferLandTitle(tx, setOfSigners)
+
             else -> throw IllegalArgumentException("Unrecognised Command")
         }
     }
@@ -40,45 +41,45 @@ class LandTitleContract: Contract {
         "One input should be consumed while issuing Land Title Asset on the ledger" using(tx.inputs.size == 1)
         val input = tx.inputsOfType<RequestIssuanceState>().single()
 
-        "There should be exactly one output state" using(tx.outputs.size == 2)
+        "There should be exactly two output states" using(tx.outputs.size == 2)
         val output = tx.outputsOfType<LandTitleState>().single()
         "Issuing party and Delegating party must be different" using (output.titleIssuer != output.landTitleProperties.ownerConveyancer)
         "Seller's identity must have been verified" using(output.landTitleProperties.owner!!.confirmationOfIdentity)
         "Issuance transaction must be signed by the Issuer" using(setOfSigners.contains(output.titleIssuer.owningKey))
         "Delegated party and Issuer must be in the list of participants" using(output.participants.containsAll(listOf(output.titleIssuer, output.landTitleProperties.ownerConveyancer!!)))
-        "Status should be set to `ISSUED`" using (output.status == Status.ISSUED)
+        "Status should be set to `ISSUED`" using (output.status == LandTitleStatus.ISSUED)
         "Issued Land Title should not have any offer price" using(output.lastSoldValue == null)
         "Issued land title number should be equal to the requested title number" using(output.titleID == input.titleID)
     }
 
-    private fun verifyLandTitleTransferRequest(tx: LedgerTransaction) = requireThat{
-        val input = tx.inputsOfType<LandTitleState>().single()
-        val output = tx.outputsOfType<LandTitleState>().single()
+    private fun verifyAssignBuyerConveyancer(tx: LedgerTransaction, setOfSigners: Set<PublicKey>) = requireThat {
+        "There must be exactly one input state" using(tx.inputs.size == 1)
+        val inputLandTitleState = tx.inputsOfType<LandTitleState>().single()
 
-        "There should be exactly one input state" using(tx.inputs.size == 1)
-        "There should be exactly one output state" using(tx.outputs.size == 1)
-        "Buyer and Seller must be different" using (output.landTitleProperties.buyer != output.landTitleProperties.owner)
-        "Accepting Party (Buyer's Conveyancer) should be added to the participants list" using(output.participants.containsAll(input.participants + output.landTitleProperties.buyerConveyancer))
-        val verify = Crypto.doVerify(input.landTitleProperties.owner!!.publicKey!!, output.landTitleProperties.owner!!.signature!!, input.titleID.toByteArray())
-        "Only Land Title owner can initiate the Land Transfer Request" using(verify == true)
-        "Status of Consumed LandTitle state must not be `PENDING_BUYER_APPROVAL`" using (input.status != Status.PENDING_BUYER_APPROVAL)
-        "Status of Updated LandTitle state must be `PENDING_BUYER_APPROVAL`" using(output.status == Status.PENDING_BUYER_APPROVAL)
-        "Mismatch in the input and output states" using(input == output.copy(status = input.status, participants = input.participants, landTitleProperties = output.landTitleProperties.copy(buyer = input.landTitleProperties.buyer, buyerConveyancer = input.landTitleProperties.buyerConveyancer, owner = output.landTitleProperties.owner.copy(signature = input.landTitleProperties.owner.signature))))
+        "There must be exactly two output states" using(tx.outputs.size == 2)
+        val outputLandTitleState = tx.outputsOfType<LandTitleState>().single()
+        val outputAgreementState = tx.outputsOfType<LandAgreementState>().single()
+
+        "Buyer's conveyancer must be added to the participants list" using(outputLandTitleState.participants.containsAll(inputLandTitleState.participants + outputAgreementState.buyerConveyancer))
+        "Mismatch in the output and input Land Title state" using(inputLandTitleState == outputLandTitleState.copy(participants = inputLandTitleState.participants, status = inputLandTitleState.status))
+        "Transaction must be signed by the owner's conveyancer" using(setOfSigners.containsAll(listOf(inputLandTitleState.landTitleProperties.ownerConveyancer!!.owningKey)))
     }
 
-    private fun verifyLandTitleTransferResponse(tx: LedgerTransaction) = requireThat{
-        val input = tx.inputsOfType<LandTitleState>().single()
-        val output = tx.outputsOfType<LandTitleState>().single()
+    // To Be completed a week after sprint 11. Just commenting for now to keep track of TODO things
+    private fun verifyTransferLandTitle(tx: LedgerTransaction, setOfSigners: Set<PublicKey>) = requireThat {
+        /*"Two input states should be consumed while transferring land title" using(tx.inputs.size == 2)
+        val inputLandTitleState = tx.inputsOfType<LandTitleState>().single()
+        val inputAgreementState = tx.inputsOfType<LandAgreementState>().single()
 
-        "There should be exactly one input state" using(tx.inputs.size == 1)
-        "There should be exactly one output state" using(tx.outputs.size == 1)
-        "Status of Consumed LandTitle state must be `PENDING_BUYER_APPROVAL`" using (input.status == Status.PENDING_BUYER_APPROVAL)
-        "Status of Updated LandTitle state must be `TRANSFERRED`" using(output.status == Status.TRANSFERRED)
-        "Buyer and Accepting party must be null in the output state" using (output.landTitleProperties.buyer == null && output.landTitleProperties.buyerConveyancer == null)
-        val verify = Crypto.doVerify(input.landTitleProperties.buyer!!.publicKey!!, output.landTitleProperties.owner!!.signature!!, input.titleID.toByteArray())
-        "Only Land Title owner can initiate the Land Transfer Request" using(verify == true)
-        "Owner in the output state should be updated with correct owner value" using (output.landTitleProperties.owner.copy(signature = input.landTitleProperties.buyer.signature) == input.landTitleProperties.buyer && output.landTitleProperties.ownerConveyancer == input.landTitleProperties.buyerConveyancer)
-        "Mismatch in the input and output states" using(input == output.copy(status = input.status, landTitleProperties = output.landTitleProperties.copy(owner = input.landTitleProperties.owner, ownerConveyancer = input.landTitleProperties.ownerConveyancer, buyer = input.landTitleProperties.buyer, buyerConveyancer = input.landTitleProperties.buyerConveyancer)))
+        "Two output states should be produced while transferring land title" using(tx.outputs.size == 2)
+        val outputLandTitleState = tx.outputsOfType<LandTitleState>().single()
 
-    }
+        "Status of consumed land title state must be 'ASSIGN_BUYER_CONVEYANCER'" using(inputLandTitleState.status == LandTitleStatus.ASSIGN_BUYER_CONVEYANCER)
+        "Status of produced land title state must be 'TRANSFERRED'" using(outputLandTitleState.status == LandTitleStatus.TRANSFERRED)
+        "New owner must be set to the buyer specified in the agreement state" using (outputLandTitleState.landTitleProperties.owner == inputAgreementState.buyer)
+        "New owner's conveyancer must be set to the conveyancer specified in agreement state" using(outputLandTitleState.landTitleProperties.ownerConveyancer == inputAgreementState.buyerConveyancer)
+        "Last sold value of the land title state must be updated in the output state" using(outputLandTitleState.lastSoldValue == inputAgreementState.purchasePrice)
+        "Both the buyer's and seller's conveyancer must sign the transaction" using(setOfSigners.containsAll(listOf(inputLandTitleState.landTitleProperties.ownerConveyancer!!.owningKey, inputAgreementState.buyerConveyancer.owningKey)))
+        "Mismatch in the output and input Land Title state" using(inputLandTitleState == outputLandTitleState.copy(status = inputLandTitleState.status, lastSoldValue = inputLandTitleState.lastSoldValue, landTitleProperties = outputLandTitleState.landTitleProperties.copy(ownerConveyancer = inputLandTitleState.landTitleProperties.ownerConveyancer, owner = inputLandTitleState.landTitleProperties.owner)))
+  */  }
 }

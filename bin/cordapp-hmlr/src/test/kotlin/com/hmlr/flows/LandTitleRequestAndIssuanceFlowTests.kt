@@ -1,7 +1,7 @@
 package com.hmlr.flows
 
+import com.hmlr.model.LandTitleStatus
 import com.hmlr.model.RequestIssuanceStatus
-import com.hmlr.model.Status
 import com.hmlr.states.LandTitleState
 import com.hmlr.states.RequestIssuanceState
 import net.corda.core.contracts.TransactionVerificationException
@@ -43,13 +43,13 @@ class LandTitleRequestAndIssuanceFlowTests: LandTitleTests() {
         sellerConveyancer.transaction {
             val states = sellerConveyancer.services.vaultService.queryBy(LandTitleState::class.java).states
             assert(states.size == 1)
-            assert(states[0].state.data.status ==  Status.ISSUED)
+            assert(states[0].state.data.status ==  LandTitleStatus.ISSUED)
         }
 
         issuer.transaction {
             val states = issuer.services.vaultService.queryBy(LandTitleState::class.java).states
             assert(states.size == 1)
-            assert(states[0].state.data.status ==  Status.ISSUED)
+            assert(states[0].state.data.status ==  LandTitleStatus.ISSUED)
         }
 
     }
@@ -135,13 +135,13 @@ class LandTitleRequestAndIssuanceFlowTests: LandTitleTests() {
         sellerConveyancer.transaction {
             val states = sellerConveyancer.services.vaultService.queryBy(LandTitleState::class.java).states
             assert(states.size == 1)
-            assert(states[0].state.data.status ==  Status.ISSUED)
+            assert(states[0].state.data.status ==  LandTitleStatus.ISSUED)
         }
 
         issuer.transaction {
             val states = issuer.services.vaultService.queryBy(LandTitleState::class.java).states
             assert(states.size == 1)
-            assert(states[0].state.data.status ==  Status.ISSUED)
+            assert(states[0].state.data.status ==  LandTitleStatus.ISSUED)
         }
 
         // re-send the request for issuance for same titleID

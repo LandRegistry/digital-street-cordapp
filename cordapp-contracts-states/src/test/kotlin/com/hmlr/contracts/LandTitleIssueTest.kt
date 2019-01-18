@@ -106,8 +106,8 @@ class LandTitleIssueTest {
         ledgerServices.ledger{
             transaction {
                 val location = Address("A1-S2","GreenBank Road","Devon","Plymouth", "UK", "PL6 5ZD")
-                val prop = LandTitleProperties(location, BOB.party, CustomParty("Nitesh", "Solanki", "125464", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",true, null, sellerPublicKey), CustomParty("Alex", "Gomes", "43434", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",true, null, null), CHARLIE.party)
-                val landTitleState = LandTitleState(titleID = "12345", landTitleProperties = prop, titleIssuer = ALICE.party, referenceDocuments = listOf(), titleType = TitleType.WHOLE, lastSoldValue = null, status = Status.TRANSFERRED)
+                val prop = LandTitleProperties(location, BOB.party, CustomParty("Nitesh", "Solanki", "125464", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",true, null, sellerPublicKey))
+                val landTitleState = LandTitleState(titleID = "12345", landTitleProperties = prop, titleIssuer = ALICE.party, titleType = TitleType.WHOLE, lastSoldValue = null, status = LandTitleStatus.TRANSFERRED)
                 input(RequestIssuanceContract.REQUEST_ISSUANCE_CONTRACT_ID, requestIssuanceState)
                 output(RequestIssuanceContract.REQUEST_ISSUANCE_CONTRACT_ID, requestIssuanceState.copy(status = RequestIssuanceStatus.APPROVED))
                 output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleState)
@@ -131,8 +131,8 @@ class LandTitleIssueTest {
         ledgerServices.ledger {
             transaction {
                 val location = Address("A1-S2","GreenBank Road","Devon","Plymouth", "UK", "PL6 5ZD")
-                val prop = LandTitleProperties(location, BOB.party, CustomParty("Nitesh", "Solanki", "125464", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",true, null, sellerPublicKey), CustomParty("Alex", "Gomes", "43434", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",true, null, null), CHARLIE.party)
-                val landTitleState = LandTitleState(titleID = "12345", landTitleProperties = prop, titleIssuer = ALICE.party, referenceDocuments = listOf(), titleType = TitleType.WHOLE, lastSoldValue = 100.POUNDS, status = Status.ISSUED)
+                val prop = LandTitleProperties(location, BOB.party, CustomParty("Nitesh", "Solanki", "125464", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",true, null, sellerPublicKey))
+                val landTitleState = LandTitleState(titleID = "12345", landTitleProperties = prop, titleIssuer = ALICE.party, titleType = TitleType.WHOLE, lastSoldValue = 100.POUNDS, status = LandTitleStatus.ISSUED)
                 input(RequestIssuanceContract.REQUEST_ISSUANCE_CONTRACT_ID, requestIssuanceState)
                 output(RequestIssuanceContract.REQUEST_ISSUANCE_CONTRACT_ID, requestIssuanceState.copy(status = RequestIssuanceStatus.APPROVED))
                 output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleState)
@@ -180,8 +180,8 @@ class LandTitleIssueTest {
 
             transaction {
                 val location = Address("A1-S2","GreenBank Road","Devon","Plymouth", "UK", "PL6 5ZD")
-                val prop = LandTitleProperties(location, BOB.party, CustomParty("Nitesh", "Solanki", "125464", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",false, null, sellerPublicKey), CustomParty("Alex", "Gomes", "43434", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",true, null, null), CHARLIE.party)
-                val landTitleState = LandTitleState(titleID = "12345", landTitleProperties = prop, titleIssuer = ALICE.party, referenceDocuments = listOf(), titleType = TitleType.WHOLE, lastSoldValue = null, status = Status.ISSUED)
+                val prop = LandTitleProperties(location, BOB.party, CustomParty("Nitesh", "Solanki", "125464", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",false, null, sellerPublicKey))
+                val landTitleState = LandTitleState(titleID = "12345", landTitleProperties = prop, titleIssuer = ALICE.party, titleType = TitleType.WHOLE, lastSoldValue = null, status = LandTitleStatus.ISSUED)
                 input(RequestIssuanceContract.REQUEST_ISSUANCE_CONTRACT_ID, requestIssuanceState)
                 output(RequestIssuanceContract.REQUEST_ISSUANCE_CONTRACT_ID, requestIssuanceState.copy(status = RequestIssuanceStatus.APPROVED))
                 output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleState)
@@ -206,8 +206,8 @@ class LandTitleIssueTest {
 
             transaction {
                 val location = Address("A1-S2","GreenBank Road","Devon","Plymouth", "UK", "PL6 5ZD")
-                val prop = LandTitleProperties(location, BOB.party, CustomParty("Nitesh", "Solanki", "125464", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",true, null, sellerPublicKey), CustomParty("Alex", "Gomes", "43434", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",true, null, null), CHARLIE.party)
-                val landTitleState = LandTitleState(titleID = "212123131", landTitleProperties = prop, titleIssuer = ALICE.party, referenceDocuments = listOf(), titleType = TitleType.WHOLE, lastSoldValue = null, status = Status.ISSUED)
+                val prop = LandTitleProperties(location, BOB.party, CustomParty("Nitesh", "Solanki", "125464", location, UserType.INDIVIDUAL, "nits7sid@example.com","9422327871",true, null, sellerPublicKey))
+                val landTitleState = LandTitleState(titleID = "212123131", landTitleProperties = prop, titleIssuer = ALICE.party, titleType = TitleType.WHOLE, lastSoldValue = null, status = LandTitleStatus.ISSUED)
                 input(RequestIssuanceContract.REQUEST_ISSUANCE_CONTRACT_ID, requestIssuanceState)
                 output(RequestIssuanceContract.REQUEST_ISSUANCE_CONTRACT_ID, requestIssuanceState.copy(status = RequestIssuanceStatus.APPROVED))
                 output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleState)

@@ -5,7 +5,7 @@ import com.hmlr.BOB
 import com.hmlr.landTitleState
 import com.hmlr.model.CustomParty
 import com.hmlr.model.Address
-import com.hmlr.model.Status
+import com.hmlr.model.LandTitleStatus
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.LinearState
 import net.corda.core.contracts.UniqueIdentifier
@@ -77,20 +77,9 @@ class LandTitleStateTests {
         assertEquals(LandTitleState::class.java.getDeclaredField("titleIssuer").type, Party::class.java)
     }
 
-    /**
-     * Test 6.
-     *
-     * */
-    @Test
-    fun hasReferenceDocsFieldOfCorrectType() {
-        // Does the borrower field exist?
-        LandTitleState::class.java.getDeclaredField("referenceDocuments")
-        // Is the borrower field of the correct type?
-        assertEquals(LandTitleState::class.java.getDeclaredField("referenceDocuments").type, List::class.java)
-    }
 
     /**
-     * Test 7.
+     * Test 6.
      *
      */
     @Test
@@ -99,7 +88,7 @@ class LandTitleStateTests {
     }
 
     /**
-     * Test 8.
+     * Test 7.
      *
      */
     @Test
@@ -108,7 +97,7 @@ class LandTitleStateTests {
     }
 
     /**
-     * Test 9.
+     * Test 8.
      *
      */
     @Test
@@ -117,7 +106,7 @@ class LandTitleStateTests {
     }
 
     /**
-     * Test 10.
+     * Test 9.
      *
      */
     @Test
@@ -128,20 +117,9 @@ class LandTitleStateTests {
         assertEquals(LandTitleState::class.java.getDeclaredField("linearId").type, UniqueIdentifier::class.java)
     }
 
-    /**
-     * Test 11.
-     *
-     */
-    @Test
-    fun hasBuyerFieldOfCorrectType() {
-        // Does the location field exist?
-        var propClass =  LandTitleState::class.java.getDeclaredField("landTitleProperties").type
-        // Is the location field of the correct type?
-        assertEquals(propClass.getDeclaredField("buyer").type, CustomParty::class.java)
-    }
 
     /**
-     * Test 12.
+     * Test 10.
      *
      */
     @Test
@@ -153,7 +131,7 @@ class LandTitleStateTests {
     }
 
     /**
-     * Test 13.
+     * Test 11.
      *
      */
     @Test
@@ -161,6 +139,6 @@ class LandTitleStateTests {
         // Does the location field exist?
         var propClass =  LandTitleState::class.java.getDeclaredField("status").type
         // Is the location field of the correct type?
-        assertEquals(propClass, Status::class.java)
+        assertEquals(propClass, LandTitleStatus::class.java)
     }
 }

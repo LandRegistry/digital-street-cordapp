@@ -183,7 +183,7 @@ class IssueLandTitle(val flowSession: FlowSession) : FlowLogic<SignedTransaction
             val owner = CustomParty(
                     forename = ownerJson.getString("forename"),
                     surname = ownerJson.getString("surname"),
-                    NIN = ownerJson.getString("national_insurance_number"),
+                    userID = ownerJson.getString("user_id"),
                     address = Address(
                             houseNumber = ownerAddressJson.getString("house_name_number"),
                             streetName = ownerAddressJson.getString("street_name"),
@@ -211,15 +211,12 @@ class IssueLandTitle(val flowSession: FlowSession) : FlowLogic<SignedTransaction
                 landTitleProperties = LandTitleProperties(
                         address = address,
                         ownerConveyancer = flowSession.counterparty,
-                        owner = owner,
-                        buyer = null,
-                        buyerConveyancer = null
+                        owner = owner
                 ),
                 titleIssuer = ourIdentity,
-                referenceDocuments = null,
                 titleType = TitleType.WHOLE,
                 lastSoldValue = null,
-                status = Status.ISSUED
+                status = LandTitleStatus.ISSUED
             )
             return landTitleState
 

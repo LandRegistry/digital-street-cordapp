@@ -38,8 +38,8 @@ object LandTitleStateSchemaV1: MappedSchema(
             @Column(name = "owner_last_name")
             var ownerLastName: String,
 
-            @Column(name = "owner_nin")
-            var ownerNIN: String,
+            @Column(name = "owner_id")
+            var ownerID: String,
 
             @Column(name = "houseNumber")
             var houseNumber: String,
