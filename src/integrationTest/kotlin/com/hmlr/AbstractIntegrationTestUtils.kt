@@ -3,7 +3,6 @@ package com.hmlr
 import com.hmlr.model.*
 import net.corda.core.crypto.Crypto
 import net.corda.core.identity.CordaX500Name
-import net.corda.finance.POUNDS
 import java.security.PrivateKey
 import java.time.Instant
 import java.time.LocalDate
@@ -14,7 +13,7 @@ abstract class AbstractIntegrationTestUtils {
     val ConveyancerA = CordaX500Name("Conveyancer1", "Plymouth", "GB")
     val ConveyancerB = CordaX500Name("Conveyancer2", "Plymouth", "GB")
     val LenderA = CordaX500Name("Lender1", "Plymouth", "GB")
-    val LenderB = CordaX500Name("Lender2", "Plymouth", "GB")
+    val SettlingParty = CordaX500Name("SettlingParty", "Plymouth", "GB")
     val buyerKeys = Crypto.generateKeyPair(Crypto.RSA_SHA256)
     val sellerKeys = Crypto.generateKeyPair(Crypto.RSA_SHA256)
     val buyerPublicKey = buyerKeys.public

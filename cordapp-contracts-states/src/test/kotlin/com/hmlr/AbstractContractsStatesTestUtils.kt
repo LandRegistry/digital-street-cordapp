@@ -18,6 +18,7 @@ abstract class AbstractContractsStatesTestUtils {
     var CHARLIE = TestIdentity(CordaX500Name(organisation = "Charlie", locality = "TestVillage", country = "US"))
     var LENDER1 = TestIdentity(CordaX500Name(organisation = "LenderA", locality = "TestVillage", country = "US"))
     var LENDER2 = TestIdentity(CordaX500Name(organisation = "LenderB", locality = "TestVillage", country = "US"))
+    var SETTLING_PARTY = TestIdentity(CordaX500Name(organisation = "SellingParty", locality = "TestVillage", country = "US"))
     val titleId = "12345"
     val caseReferenceNumber = "ZQ12345"
     val buyerKeys = Crypto.generateKeyPair(Crypto.RSA_SHA256)
@@ -44,11 +45,11 @@ abstract class AbstractContractsStatesTestUtils {
     val restrictionText = "No disposition of the registered estate by the proprietor of the registered estate is to be registered"
     val charge = Charge(Instant.now(), LENDER1.party, 100.POUNDS)
     val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER1.party, ActionOnRestriction.NO_ACTION, false, charge)
-    val instructConveyancerState = InstructConveyancerState(titleId, caseReferenceNumber, ALICE.party, BOB.party, seller)
-    val proposedChargeOrRestrictionState = ProposedChargesAndRestrictionsState(titleID = titleId,  ownerConveyancer = BOB.party, buyerConveyancer = null, buyerLender = null, charges =  setOf(charge), restrictions = setOf(chargeRestriction), addNewChargeConsented = false, dischargeConsented = false, status = DTCConsentStatus.ISSUED, participants = listOf(ALICE.party, BOB.party, LENDER1.party))
+    val proposedChargeOrRestrictionState = ProposedChargesAndRestrictionsState(titleID = titleId,  ownerConveyancer = BOB.party, buyerConveyancer = null, charges =  setOf(charge), restrictions = setOf(chargeRestriction), addNewChargeConsented = false, dischargeConsented = false, status = DTCConsentStatus.ISSUED, participants = listOf(ALICE.party, BOB.party, LENDER1.party))
     val landTitleState = LandTitleState(titleID = titleId, landTitleProperties = prop, titleIssuer = ALICE.party, titleType = TitleType.WHOLE, lastSoldValue = null, status = LandTitleStatus.ISSUED, charges =  setOf(charge), restrictions = setOf(chargeRestriction), proposedChargeOrRestrictionLinearId = proposedChargeOrRestrictionState.linearId.toString())
-    val requestIssuanceState = RequestIssuanceState(titleId, ALICE.party, BOB.party, seller, RequestIssuanceStatus.PENDING, instructConveyancerState.linearId.toString())
-    val agreementState = LandAgreementState(titleId, buyer, seller, CHARLIE.party, BOB.party, LocalDate.now(), LocalDate.now().atStartOfDay().plusDays(14).toInstant(ZoneOffset.UTC), 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, landTitleState.linearId.toString(), listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false)
+    val requestIssuanceState = RequestIssuanceState(titleId, ALICE.party, BOB.party, seller, RequestIssuanceStatus.PENDING)
+    var agreementState = LandAgreementState(titleId, buyer, seller, CHARLIE.party, BOB.party, LocalDate.now(), LocalDate.now().atStartOfDay().plusDays(14).toInstant(ZoneOffset.UTC), 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, landTitleState.linearId.toString(), listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false, "")
+    val paymentConfirmationState = PaymentConfirmationState(buyer = buyer, seller = seller, status = PaymentConfirmationStatus.ISSUED, settlingParty = SETTLING_PARTY.party, purchasePrice = agreementState.purchasePrice, titleID = titleId, landAgreementStateLinearId = agreementState.linearId.toString(), participants = listOf(BOB.party, CHARLIE.party, SETTLING_PARTY.party), buyerConveyancer = CHARLIE.party)
     val landTitleStateWithBuyerConveyancer = landTitleState.copy(participants = landTitleState.participants + agreementState.buyerConveyancer, status = LandTitleStatus.ASSIGN_BUYER_CONVEYANCER)
 
     protected fun sign(message: String, key: PrivateKey): ByteArray {

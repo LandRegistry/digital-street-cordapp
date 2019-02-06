@@ -241,4 +241,16 @@ class LandAgreementStateTests : AbstractContractsStatesTestUtils() {
         // Is the status field of the correct type?
         assertEquals(LandAgreementState::class.java.getDeclaredField("isMortgageTermsAdded").type, Boolean::class.java)
     }
+
+
+    /**
+     * Test 22.
+     */
+    @Test
+    fun `has paymentConfirmationStateLinearId Field Of Correct Type`() {
+        // Does the paymentConfirmationStateLinearId field exist?
+        LandAgreementState::class.java.getDeclaredField("paymentConfirmationStateLinearId")
+        // Is the paymentConfirmationStateLinearId field of the correct type?
+        assertEquals(LandAgreementState::class.java.getDeclaredField("paymentConfirmationStateLinearId").type, String::class.java)
+    }
 }

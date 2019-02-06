@@ -1,10 +1,7 @@
 package com.hmlr.flows
 
 import com.hmlr.model.*
-import com.hmlr.states.InstructConveyancerState
-import com.hmlr.states.LandAgreementState
-import com.hmlr.states.LandTitleState
-import com.hmlr.states.RequestIssuanceState
+import com.hmlr.states.*
 import net.corda.core.crypto.Crypto
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.transactions.SignedTransaction
@@ -33,6 +30,7 @@ abstract class AbstractFlowTestUtils {
     lateinit var sellerLender: StartedMockNode
     lateinit var hmrc: StartedMockNode
     lateinit var buyerLender: StartedMockNode
+    lateinit var settlingParty: StartedMockNode
 
     val wrongUser = Crypto.generateKeyPair(Crypto.RSA_SHA256)
     val buyerKeys = Crypto.generateKeyPair(Crypto.RSA_SHA256)
@@ -51,6 +49,7 @@ abstract class AbstractFlowTestUtils {
     val creationDate = LocalDate.now()
 
 
+
     @Before
     fun setup() {
         mockNetwork = MockNetwork(listOf("com.hmlr.states", "com.hmlr.contracts", "com.hmlr.flows", "com.hmlr.schema"), threadPerNode = true)
@@ -60,6 +59,7 @@ abstract class AbstractFlowTestUtils {
         sellerLender = mockNetwork.createNode(MockNodeParameters(legalName = CordaX500Name("Lender1", "Plymouth", "GB")))
         hmrc = mockNetwork.createNode(MockNodeParameters(legalName = CordaX500Name("HMRC", "Plymouth", "GB")))
         buyerLender = mockNetwork.createNode(MockNodeParameters(legalName = CordaX500Name("Lender2", "Plymouth", "GB")))
+        settlingParty = mockNetwork.createNode(MockNodeParameters(legalName = CordaX500Name("SettlingParty", "Plymouth", "GB")))
         mockNetwork.startNodes()
         listOf(issuer, sellerConveyancer).forEach {
             it.registerInitiatedFlow(IssueLandTitleFlow::class.java)
@@ -76,57 +76,26 @@ abstract class AbstractFlowTestUtils {
         return Crypto.doSign(Crypto.RSA_SHA256, key, message.toByteArray())
     }
 
-    protected fun instructConveyancer(callingNode: StartedMockNode) : SignedTransaction? {
-        val issuerParty = issuer.info.singleIdentity()
-        val conveyancerParty = sellerConveyancer.info.singleIdentity()
 
-        val instructConveyancerState = InstructConveyancerState(titleId, caseRefNum, issuerParty, conveyancerParty, seller)
-        val flow = InstructConveyancerFlow(instructConveyancerState)
-        val future = callingNode.startFlow(flow)
-        val signdTx = future.getOrThrow()
-        val recordedTx = callingNode.services.validatedTransactions.getTransaction(signdTx.id)
-        return recordedTx
-    }
-
-    protected fun requestForIssuance(callingParty: StartedMockNode) : SignedTransaction? {
-        instructConveyancer(issuer)
-        mockNetwork.waitQuiescent()
-
-        // fetch the linearID of the Instruction state from seller conveyancer
-        var linearID: String? = null
-
-        callingParty.transaction {
-            val states = callingParty.services.vaultService.queryBy(InstructConveyancerState::class.java).states
-            linearID = states[0].state.data.linearId.toString()
-        }
+    protected fun requestForIssuance() : SignedTransaction? {
 
         val issuer = issuer.info.singleIdentity()
         val conveyancer = sellerConveyancer.info.singleIdentity()
 
-        val requestIssuanceState = RequestIssuanceState(titleId, issuer, conveyancer, seller, RequestIssuanceStatus.PENDING, linearID.toString())
-        val flow = RequestIssuanceFlow(requestIssuanceState, linearID!!)
+        val requestIssuanceState = RequestIssuanceState(titleId, issuer, conveyancer, seller, RequestIssuanceStatus.PENDING)
+        val flow = RequestIssuanceFlow(requestIssuanceState)
         val future = sellerConveyancer.startFlow(flow)
         val signdTx = future.getOrThrow()
         val recordedTx = sellerConveyancer.services.validatedTransactions.getTransaction(signdTx.id)
         return recordedTx
     }
 
-    protected fun requestForIssuanceFailed(callingParty: StartedMockNode) : SignedTransaction? {
-        instructConveyancer(issuer)
-        mockNetwork.waitQuiescent()
-
-        // fetch the linearID of the Instruction state from seller conveyancer
-        var linearID: String? = null
-
-        callingParty.transaction {
-            val states = callingParty.services.vaultService.queryBy(InstructConveyancerState::class.java).states
-            linearID = states[0].state.data.linearId.toString()
-        }
+    protected fun requestForIssuanceFailed() : SignedTransaction? {
         val issuer = issuer.info.singleIdentity()
         val conveyancer = sellerConveyancer.info.singleIdentity()
 
-        val requestIssuanceState = RequestIssuanceState(invalidTitleId, issuer, conveyancer, seller, RequestIssuanceStatus.PENDING, linearID)
-        val flow = RequestIssuanceFlow(requestIssuanceState, linearID!!)
+        val requestIssuanceState = RequestIssuanceState(invalidTitleId, issuer, conveyancer, seller, RequestIssuanceStatus.PENDING)
+        val flow = RequestIssuanceFlow(requestIssuanceState)
         val future = sellerConveyancer.startFlow(flow)
         val signdTx = future.getOrThrow()
         val recordedTx = sellerConveyancer.services.validatedTransactions.getTransaction(signdTx.id)
@@ -150,8 +119,8 @@ abstract class AbstractFlowTestUtils {
         }
         val ownerConveyancer = sellerConveyancer.info.singleIdentity()
         val buyerConveyancer = buyerConveyancer.info.singleIdentity()
-        val agreementState = LandAgreementState(titleId, buyer, owner!!, buyerConveyancer, ownerConveyancer, creationDate, completionDate!!, 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, titleID!!, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false)
-        val flow = DraftAgreementFlow(agreementState, buyerConveyancer)
+        val agreementState = LandAgreementState(titleId, buyer, owner!!, buyerConveyancer, ownerConveyancer, creationDate, completionDate!!, 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, titleID!!, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false, "")
+        val flow = DraftAgreementFlow(agreementState, buyerConveyancer, settlingParty.info.singleIdentity())
         val future = callingParty.startFlow(flow)
         return future.getOrThrow()
     }
@@ -202,6 +171,9 @@ abstract class AbstractFlowTestUtils {
             linearID = states[0].state.data.linearId.toString()
         }
 
+        confirmFundsReceivedInEscrow()
+        mockNetwork.waitQuiescent()
+
         val flow = BuyerSignAgreementFlow(linearID!!, sign(titleId, privateKey))
         // adjust the date of the nodes to completion date for testing purpose
         listOf(sellerConveyancer, buyerConveyancer).forEach {
@@ -213,7 +185,7 @@ abstract class AbstractFlowTestUtils {
     }
 
     protected fun requestForDischarge(callingParty: StartedMockNode): SignedTransaction? {
-        requestForIssuance(sellerConveyancer)
+        requestForIssuance()
         mockNetwork.waitQuiescent()
 
         // fetch the titleID of the land title state from seller conveyancer
@@ -247,7 +219,7 @@ abstract class AbstractFlowTestUtils {
     protected fun addNewCharge(callingParty: StartedMockNode): SignedTransaction? {
         val restrictionText = "No disposition of the registered estate by the proprietor of the registered estate is to be registered"
         val charge = Charge(Instant.now(), sellerLender.info.singleIdentity(), 100.POUNDS)
-        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, buyerLender.info.singleIdentity(), ActionOnRestriction.ADD_RESTRICTION, true, charge)
+        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, sellerLender.info.singleIdentity(), ActionOnRestriction.ADD_RESTRICTION, true, charge)
 
         createDraftAgreement(sellerConveyancer)
         mockNetwork.waitQuiescent()
@@ -259,8 +231,21 @@ abstract class AbstractFlowTestUtils {
             val states = sellerConveyancer.services.vaultService.queryBy(LandTitleState::class.java).states
             proposedChargeOrRestrictionLinearID = states[0].state.data.proposedChargeOrRestrictionLinearId.toString()
         }
-        val flow = AddNewChargeFlow(proposedChargeOrRestrictionLinearID!!, setOf(chargeRestriction), setOf(charge), buyerLender.info.singleIdentity())
+        val flow = AddNewChargeFlow(proposedChargeOrRestrictionLinearID!!, setOf(chargeRestriction), setOf(charge))
         val future = callingParty.startFlow(flow)
+        return future.getOrThrow()
+    }
+
+    protected fun confirmFundsReceivedInEscrow(): SignedTransaction? {
+        // fetch the titleID of the land title state from seller conveyancer
+        var linearID: String? = null
+
+        settlingParty.transaction {
+            val states = sellerConveyancer.services.vaultService.queryBy(PaymentConfirmationState::class.java).states
+            linearID = states[0].state.data.linearId.toString()
+        }
+        val flow = ConfirmPaymentReceivedFlow(linearID!!)
+        val future = settlingParty.startFlow(flow)
         return future.getOrThrow()
     }
 }

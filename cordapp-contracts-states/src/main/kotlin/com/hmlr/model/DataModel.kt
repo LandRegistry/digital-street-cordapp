@@ -196,3 +196,14 @@ enum class DTCConsentStatus {
     ASSIGN_BUYER_CONVEYANCER,
     CONSENT_FOR_NEW_CHARGE,
 }
+
+/**
+ * Enum class representing Payment Confirmation status
+ */
+@CordaSerializable
+enum class PaymentConfirmationStatus {
+    ISSUED,
+    REQUEST_FOR_PAYMENT,
+    CONFIRM_PAYMENT_RECEIVED_IN_ESCROW,
+    CONFIRM_FUNDS_RELEASED
+}

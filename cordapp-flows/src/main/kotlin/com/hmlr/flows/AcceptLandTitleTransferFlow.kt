@@ -1,6 +1,7 @@
 package com.hmlr.flows
 
 import co.paralleluniverse.fibers.Suspendable
+import com.hmlr.states.PaymentConfirmationState
 import net.corda.core.contracts.requireThat
 import net.corda.core.flows.*
 import net.corda.core.transactions.SignedTransaction

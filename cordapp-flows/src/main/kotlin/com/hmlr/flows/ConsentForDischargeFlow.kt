@@ -2,24 +2,14 @@ package com.hmlr.flows
 
 import co.paralleluniverse.fibers.Suspendable
 import com.hmlr.common.utils.FlowLogicCommonMethods
-import com.hmlr.contracts.InstructConveyancerContract
-import com.hmlr.contracts.RequestIssuanceContract
 import com.hmlr.contracts.ProposedChargeAndRestrictionContract
 import com.hmlr.model.ActionOnRestriction
 import com.hmlr.model.DTCConsentStatus
-import com.hmlr.states.InstructConveyancerState
 import com.hmlr.states.LandTitleState
-import com.hmlr.states.RequestIssuanceState
 import com.hmlr.states.ProposedChargesAndRestrictionsState
 import net.corda.core.contracts.Command
-import net.corda.core.contracts.LinearState
-import net.corda.core.contracts.StateAndRef
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
-import net.corda.core.node.ServiceHub
-import net.corda.core.node.services.Vault
-import net.corda.core.node.services.queryBy
-import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker

@@ -16,6 +16,5 @@ data class RequestIssuanceState(
             val sellerConveyancer: Party,
             val seller: CustomParty,
             val status: RequestIssuanceStatus,
-            val instructionStateLinearID: String?,
             override val linearId: UniqueIdentifier = UniqueIdentifier(),
             override val participants: List<AbstractParty> = listOf(titleIssuer, sellerConveyancer)): LinearState

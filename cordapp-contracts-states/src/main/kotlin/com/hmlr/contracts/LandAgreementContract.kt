@@ -5,6 +5,7 @@ import net.corda.core.contracts.*
 import net.corda.core.transactions.LedgerTransaction
 import com.hmlr.states.LandTitleState
 import com.hmlr.states.LandAgreementState
+import com.hmlr.states.PaymentConfirmationState
 import net.corda.core.crypto.Crypto
 import java.security.PublicKey
 import java.time.Instant
@@ -68,12 +69,13 @@ class LandAgreementContract: Contract {
         "Two input should be consumed while creating draft agreement" using (tx.inputs.size == 2)
         val inputLandTitleState = tx.inputsOfType<LandTitleState>().single()
 
-        "There should be exactly three output states" using (tx.outputs.size == 3)
+        "There should be exactly four output states" using (tx.outputs.size == 4)
         val outputLandAgreementState = tx.outputsOfType<LandAgreementState>().single()
         val timeWindow: TimeWindow? = tx.timeWindow
         val currentTime = timeWindow?.fromTime ?: throw IllegalArgumentException("Drafting must have a time window")
         val currentDate = Instant.ofEpochMilli(currentTime.toEpochMilli()).atZone(ZoneOffset.UTC).toLocalDate()
         val creationDateInstant = outputLandAgreementState.creationDate.atStartOfDay().toInstant(ZoneOffset.UTC)
+        val outputPaymentConfirmationState = tx.outputsOfType<PaymentConfirmationState>().single()
 
         "Transaction must be signed by the seller's conveyancer" using (setOfSigners.size == 1 && setOfSigners.contains(outputLandAgreementState.sellerConveyancer.owningKey))
         "Seller must be the owner of the consumed land title state" using (outputLandAgreementState.seller.equals(inputLandTitleState.landTitleProperties.owner.copy(signature = outputLandAgreementState.seller.signature)))
@@ -90,6 +92,7 @@ class LandAgreementContract: Contract {
         "Buyer's conveyancer and seller's conveyancer should be in the Land Agreement participants list" using (outputLandAgreementState.participants.size == 2 && outputLandAgreementState.participants.containsAll(listOf(outputLandAgreementState.sellerConveyancer, outputLandAgreementState.buyerConveyancer)))
         "isMortgageTermsAdded flag must be false" using(!outputLandAgreementState.isMortgageTermsAdded)
         "The agreement state status should be 'CREATED'" using (outputLandAgreementState.status == AgreementStatus.CREATED)
+        "Payment confirmation state linear id in the agreement state must match with the linear id of produced payment confirmation state" using(outputLandAgreementState.paymentConfirmationStateLinearId == outputPaymentConfirmationState.linearId.toString())
     }
 
     /**
@@ -99,18 +102,16 @@ class LandAgreementContract: Contract {
      * @return [Boolean]
      */
     private fun verifyApproveSalesAgreement(tx: LedgerTransaction, setOfSigners: Set<PublicKey>) = requireThat {
-        "One input should be consumed while approving sales agreement" using (tx.inputs.size == 1)
+        "One input should be consumed while approving sales agreement" using (tx.inputs.size == 2)
         val input = tx.inputsOfType<LandAgreementState>().single()
         "Input agreement status should be 'CREATED'" using (input.status == AgreementStatus.CREATED)
-
-        "There should be exactly one output state while approving sales agreement" using (tx.outputs.size == 1)
+        "There should be exactly two output states while approving sales agreement" using (tx.outputs.size == 2)
         val output = tx.outputsOfType<LandAgreementState>().single()
         "Transaction must be signed by the buyer's conveyancer" using (setOfSigners.size == 1 && setOfSigners.contains(output.buyerConveyancer.owningKey))
         "Output agreement status should be 'APPROVED'" using (output.status == AgreementStatus.APPROVED)
         "isMortgageTermsAdded flag must be true" using(output.isMortgageTermsAdded)
         "Mismatch in input and output states while approving sales agreement" using (input == output.copy(status = AgreementStatus.CREATED, participants = input.participants, isMortgageTermsAdded = input.isMortgageTermsAdded))
     }
-
 
     /**
      * validation logic for [Commands.SellerSignAgreement] command
@@ -157,18 +158,20 @@ class LandAgreementContract: Contract {
      * @return [Boolean]
      */
     private fun verifyFinalizeAgreement(tx: LedgerTransaction, setOfSigners: Set<PublicKey>) = requireThat{
-        "Three input states must be consumed" using(tx.inputs.size == 3)
-        "Three output states must be produced" using(tx.outputs.size == 3)
+        "Four input states must be consumed" using(tx.inputs.size == 4)
+        "Four output states must be produced" using(tx.outputs.size == 4)
 
         val inputAgreementState = tx.inputsOfType<LandAgreementState>().single()
         val inputLandTitleState = tx.inputsOfType<LandTitleState>().single()
+        val inputPaymentConfirmationState = tx.inputsOfType<PaymentConfirmationState>().single()
 
         val outputAgreementState = tx.outputsOfType<LandAgreementState>().single()
-        "Transaction must be signed by both the conveyancer" using(setOfSigners.containsAll(listOf(inputAgreementState.sellerConveyancer.owningKey, inputAgreementState.buyerConveyancer.owningKey, inputLandTitleState.titleIssuer.owningKey)))
+        "Transaction must be signed by both the conveyancers, title issuer and settling party" using(setOfSigners.size == 4 && setOfSigners.containsAll(listOf(inputAgreementState.sellerConveyancer.owningKey, inputAgreementState.buyerConveyancer.owningKey, inputLandTitleState.titleIssuer.owningKey, inputPaymentConfirmationState.settlingParty.owningKey)))
         "Consumed Agreement state must be in 'COMPLETED' state" using(inputAgreementState.status == AgreementStatus.COMPLETED)
         "Produced Agreement state must be in 'TRANSFERRED' state'" using(outputAgreementState.status == AgreementStatus.TRANSFERRED)
         "Title state linearID must be the same as the consumed land title state" using (inputAgreementState.titleStateLinearId == inputLandTitleState.linearId.toString())
         "Land agreement titleID must be the same as the consumed land title state titleID" using (inputAgreementState.titleID == inputLandTitleState.titleID)
-        "Mismatch in the input and output LandAgreement state" using(inputAgreementState == outputAgreementState.copy(status = inputAgreementState.status, seller = outputAgreementState.seller.copy(signature = inputAgreementState.seller.signature), buyer = outputAgreementState.buyer.copy(signature = inputAgreementState.buyer.signature)))
+        "Mismatch in the input and output LandAgreement state" using(inputAgreementState == outputAgreementState.copy(status = inputAgreementState.status, seller = outputAgreementState.seller.copy(signature = inputAgreementState.seller.signature), buyer = outputAgreementState.buyer.copy(signature = inputAgreementState.buyer.signature), participants = inputAgreementState.participants))
+        "Seller conveyancer, Buyer conveyancer and Settling party must be added to the participants list" using(outputAgreementState.participants.containsAll(inputAgreementState.participants + inputPaymentConfirmationState.settlingParty) && outputAgreementState.participants.size == 3)
     }
 }

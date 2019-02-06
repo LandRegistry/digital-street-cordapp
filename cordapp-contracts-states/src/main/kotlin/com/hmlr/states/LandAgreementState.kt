@@ -33,6 +33,7 @@ data class LandAgreementState(val titleID: String,
                               val titleGuarantee: TitleGuarantee,
                               val status: AgreementStatus,
                               val isMortgageTermsAdded: Boolean,
+                              val paymentConfirmationStateLinearId: String,
                               override val linearId: UniqueIdentifier = UniqueIdentifier(),
                               override val participants: List<AbstractParty> = listOf(sellerConveyancer, buyerConveyancer))
     : LinearState, SchedulableState{

@@ -4,12 +4,15 @@ import co.paralleluniverse.fibers.Suspendable
 import com.hmlr.common.utils.FlowLogicCommonMethods
 import com.hmlr.contracts.LandAgreementContract
 import com.hmlr.contracts.LandTitleContract
+import com.hmlr.contracts.PaymentConfirmationContract
 import com.hmlr.contracts.ProposedChargeAndRestrictionContract
 import com.hmlr.model.DTCConsentStatus
 import com.hmlr.model.LandTitleStatus
+import com.hmlr.model.PaymentConfirmationStatus
 import com.hmlr.schema.LandTitleStateSchemaV1
 import com.hmlr.states.LandAgreementState
 import com.hmlr.states.LandTitleState
+import com.hmlr.states.PaymentConfirmationState
 import com.hmlr.states.ProposedChargesAndRestrictionsState
 import net.corda.core.contracts.Command
 import net.corda.core.contracts.StateAndRef
@@ -31,7 +34,8 @@ import net.corda.core.utilities.seconds
 @InitiatingFlow
 @StartableByRPC
 class DraftAgreementFlow(val agreementState: LandAgreementState,
-                     val respondingConveyancer: Party): FlowLogic<SignedTransaction>(), FlowLogicCommonMethods {
+                         val respondingConveyancer: Party,
+                         val settlingParty: Party): FlowLogic<SignedTransaction>(), FlowLogicCommonMethods {
 
     companion object {
         object GENERATING_TRANSACTION : ProgressTracker.Step("Generating Draft Agreement transaction")
@@ -78,24 +82,27 @@ class DraftAgreementFlow(val agreementState: LandAgreementState,
         // add output states
         val landTitleOutputState = landTitleStateAndRef.state.data
         val chargeAndRestrictionOutputState = chargeAndRestrictionStateAndRef.state.data
-
+        val paymentConfirmationState = PaymentConfirmationState(titleID = agreementState.titleID, buyer = agreementState.buyer, seller = agreementState.seller, landAgreementStateLinearId = agreementState.linearId.toString(), purchasePrice = agreementState.purchasePrice, status = PaymentConfirmationStatus.ISSUED, settlingParty = settlingParty, participants = listOf(agreementState.buyerConveyancer, agreementState.sellerConveyancer, settlingParty), buyerConveyancer = agreementState.buyerConveyancer)
         val newLandTitleOutputState = landTitleOutputState.copy(participants = landTitleOutputState.participants + respondingConveyancer, status = LandTitleStatus.ASSIGN_BUYER_CONVEYANCER)
         val newChargeAndRestrictionOutputState = chargeAndRestrictionOutputState.copy(participants = chargeAndRestrictionOutputState.participants + respondingConveyancer, status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER, buyerConveyancer = respondingConveyancer)
+        val newAgreementState = agreementState.copy(paymentConfirmationStateLinearId = paymentConfirmationState.linearId.toString())
 
         tx.addOutputState(newLandTitleOutputState, LandTitleContract.LAND_TITLE_CONTRACT_ID)
-        tx.addOutputState(agreementState, LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID)
+        tx.addOutputState(newAgreementState, LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID)
         tx.addOutputState(newChargeAndRestrictionOutputState, ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID)
+        tx.addOutputState(paymentConfirmationState, PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID)
 
         // add commands
         val landTitleStateData = landTitleStateAndRef.state.data
-        val assignBuyerConveyancerToLandTitleStateCommand = Command(LandTitleContract.Commands.AssignBuyerConveyancer(), landTitleStateData.landTitleProperties.ownerConveyancer.owningKey)
+        val assignBuyerConveyancerCommand = Command(LandTitleContract.Commands.AssignBuyerConveyancer(), landTitleStateData.landTitleProperties.ownerConveyancer.owningKey)
         val createDraftAgreementCommand = Command(LandAgreementContract.Commands.CreateDraftAgreement(), landTitleStateData.landTitleProperties.ownerConveyancer.owningKey)
         val assignBuyerConveyancerToChargeStateCommand = Command(ProposedChargeAndRestrictionContract.Commands.AssignBuyerConveyancer() ,listOf(agreementState.sellerConveyancer.owningKey))
+        val issuePaymentConfirmationStateCommand = Command(PaymentConfirmationContract.Commands.IssuePaymentConfirmation(), agreementState.sellerConveyancer.owningKey)
 
-
-        tx.addCommand(assignBuyerConveyancerToLandTitleStateCommand)
+        tx.addCommand(assignBuyerConveyancerCommand)
         tx.addCommand(createDraftAgreementCommand)
         tx.addCommand(assignBuyerConveyancerToChargeStateCommand)
+        tx.addCommand(issuePaymentConfirmationStateCommand)
 
         tx.setTimeWindow(serviceHub.clock.instant(), 60.seconds)
 

@@ -1,28 +1,28 @@
 package com.hmlr.contracts
 
 import com.hmlr.AbstractContractsStatesTestUtils
-import com.hmlr.model.*
+import com.hmlr.model.AgreementStatus
+import com.hmlr.model.PaymentConfirmationStatus
 import net.corda.core.contracts.TypeOnlyCommandData
-
 import net.corda.testing.node.MockServices
 import net.corda.testing.node.ledger
 import org.junit.Test
 
-class LandAgreementApproveTests : AbstractContractsStatesTestUtils() {
+class RequestForPaymentTests: AbstractContractsStatesTestUtils() {
 
     class DummyCommand : TypeOnlyCommandData()
     private var ledgerServices = MockServices(listOf("com.hmlr.contracts"))
 
     @Test
-    fun `must Include ApproveLandAgreement Command`() {
+    fun `must Include RequestForPayment Command`() {
         ledgerServices.ledger {
             transaction {
                 input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState)
                 input(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
                 output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
                 output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT, landAgreementStateLinearId = agreementState.linearId.toString()))
-                command(listOf(CHARLIE.publicKey), LandAgreementApproveTests.DummyCommand())
-                command(listOf(CHARLIE.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
+                command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
+                command(listOf(CHARLIE.publicKey), RequestForPaymentTests.DummyCommand())
                 this.fails()
             }
             transaction {
@@ -51,48 +51,6 @@ class LandAgreementApproveTests : AbstractContractsStatesTestUtils() {
             transaction {
                 input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState)
                 input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState)
-                input(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
-                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT, landAgreementStateLinearId = agreementState.linearId.toString()))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
-                command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
-                command(listOf(CHARLIE.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
-                this.fails()
-            }
-            transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState)
-                input(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
-                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT, landAgreementStateLinearId = agreementState.linearId.toString()))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
-                command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
-                command(listOf(CHARLIE.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
-                this.verifies()
-            }
-        }
-    }
-
-    @Test
-    fun `input AgreementStatus Must Be Created`() {
-        ledgerServices.ledger {
-            transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED))
-                input(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
-                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT, landAgreementStateLinearId = agreementState.linearId.toString()))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
-                command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
-                command(listOf(CHARLIE.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
-                this.fails()
-            }
-            transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED))
-                input(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
-                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT, landAgreementStateLinearId = agreementState.linearId.toString()))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
-                command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
-                command(listOf(CHARLIE.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
-                this.fails()
-            }
-            transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED))
                 input(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
                 output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT, landAgreementStateLinearId = agreementState.linearId.toString()))
                 output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
@@ -153,8 +111,8 @@ class LandAgreementApproveTests : AbstractContractsStatesTestUtils() {
                 input(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
                 output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT, landAgreementStateLinearId = agreementState.linearId.toString()))
                 output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
-                command(listOf(ALICE.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
-                command(listOf(CHARLIE.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
+                command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
+                command(listOf(ALICE.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
                 this.fails()
             }
             transaction {
@@ -162,8 +120,8 @@ class LandAgreementApproveTests : AbstractContractsStatesTestUtils() {
                 input(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
                 output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT, landAgreementStateLinearId = agreementState.linearId.toString()))
                 output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
-                command(listOf(BOB.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
-                command(listOf(CHARLIE.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
+                command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
+                command(listOf(BOB.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
                 this.fails()
             }
             transaction {
@@ -179,13 +137,13 @@ class LandAgreementApproveTests : AbstractContractsStatesTestUtils() {
     }
 
     @Test
-    fun `output Agreement Status Must Be Approved` () {
+    fun `output Payment State Status Must Be Request For Payment` () {
         ledgerServices.ledger {
             transaction {
                 input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState)
                 input(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
-                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT, landAgreementStateLinearId = agreementState.linearId.toString()))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
+                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.ISSUED, landAgreementStateLinearId = agreementState.linearId.toString()))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
                 command(listOf(CHARLIE.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
                 this.fails()
@@ -193,8 +151,8 @@ class LandAgreementApproveTests : AbstractContractsStatesTestUtils() {
             transaction {
                 input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState)
                 input(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
-                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT, landAgreementStateLinearId = agreementState.linearId.toString()))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, isMortgageTermsAdded = true))
+                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.CONFIRM_FUNDS_RELEASED, landAgreementStateLinearId = agreementState.linearId.toString()))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
                 command(listOf(CHARLIE.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
                 this.fails()
@@ -202,8 +160,8 @@ class LandAgreementApproveTests : AbstractContractsStatesTestUtils() {
             transaction {
                 input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState)
                 input(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
-                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT, landAgreementStateLinearId = agreementState.linearId.toString()))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.CREATED, isMortgageTermsAdded = true))
+                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(status = PaymentConfirmationStatus.CONFIRM_PAYMENT_RECEIVED_IN_ESCROW, landAgreementStateLinearId = agreementState.linearId.toString()))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.ApproveSalesAgreement())
                 command(listOf(CHARLIE.publicKey), PaymentConfirmationContract.Commands.RequestForPayment())
                 this.fails()

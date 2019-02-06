@@ -103,15 +103,4 @@ class RequestIssuanceStateTests : AbstractContractsStatesTestUtils() {
         // Is the referenceNumber field of the correct type?
         assertEquals(RequestIssuanceState::class.java.getDeclaredField("status").type, RequestIssuanceStatus::class.java)
     }
-
-    /**
-     * Test 10.
-     */
-    @Test
-    fun `has InstructionStateLinearID Field Of Correct Type`() {
-        // Does the instructionStateLinearID field exist?
-        RequestIssuanceState::class.java.getDeclaredField("instructionStateLinearID")
-        // Is the instructionStateLinearID field of the correct type?
-        assertEquals(RequestIssuanceState::class.java.getDeclaredField("instructionStateLinearID").type, String::class.java)
-    }
 }

@@ -3,10 +3,7 @@ package com.hmlr.contracts
 import com.hmlr.model.ActionOnRestriction
 import com.hmlr.model.ChargeRestriction
 import com.hmlr.model.LandTitleStatus
-import com.hmlr.states.LandAgreementState
-import com.hmlr.states.LandTitleState
-import com.hmlr.states.ProposedChargesAndRestrictionsState
-import com.hmlr.states.RequestIssuanceState
+import com.hmlr.states.*
 import com.hmlr.utils.checkPropertyInvariants
 import net.corda.core.contracts.*
 import net.corda.core.transactions.LedgerTransaction
@@ -90,7 +87,7 @@ class LandTitleContract: Contract {
         "There must be exactly two input state" using(tx.inputs.size == 2)
         val inputLandTitleState = tx.inputsOfType<LandTitleState>().single()
 
-        "There must be exactly three output states" using(tx.outputs.size == 3)
+        "There must be exactly four output states" using(tx.outputs.size == 4)
         val outputLandTitleState = tx.outputsOfType<LandTitleState>().single()
         val outputAgreementState = tx.outputsOfType<LandAgreementState>().single()
         "Status of consumed Land Title state must not be be 'ASSIGN_BUYER_CONVEYANCER'" using(inputLandTitleState.status != LandTitleStatus.ASSIGN_BUYER_CONVEYANCER)
@@ -107,12 +104,13 @@ class LandTitleContract: Contract {
      * @return [Boolean]
      */
     private fun verifyTransferLandTitle(tx: LedgerTransaction, setOfSigners: Set<PublicKey>) = requireThat {
-        "Three input states should be consumed while transferring land title" using (tx.inputs.size == 3)
+        "Four input states should be consumed while transferring land title" using (tx.inputs.size == 4)
         val inputLandTitleState = tx.inputsOfType<LandTitleState>().single()
         val inputAgreementState = tx.inputsOfType<LandAgreementState>().single()
         val inputProposedChargeAndRestrictionState = tx.inputsOfType<ProposedChargesAndRestrictionsState>().single()
+        val inputPaymentConfirmationState = tx.inputsOfType<PaymentConfirmationState>().single()
 
-        "Three output states should be produced while transferring land title" using (tx.outputs.size == 3)
+        "Four output states should be produced while transferring land title" using (tx.outputs.size == 4)
         val outputLandTitleState = tx.outputsOfType<LandTitleState>().single()
 
         "Status of consumed land title state must be 'ASSIGN_BUYER_CONVEYANCER'" using (inputLandTitleState.status == LandTitleStatus.ASSIGN_BUYER_CONVEYANCER)
@@ -120,11 +118,10 @@ class LandTitleContract: Contract {
         "New owner must be set to the buyer specified in the agreement state" using (outputLandTitleState.landTitleProperties.owner == inputAgreementState.buyer.copy(signature = outputLandTitleState.landTitleProperties.owner.signature))
         "New owner's conveyancer must be set to the conveyancer specified in agreement state" using (outputLandTitleState.landTitleProperties.ownerConveyancer == inputAgreementState.buyerConveyancer)
         "Last sold value of the land title state must be updated in the output state" using (outputLandTitleState.lastSoldValue == inputAgreementState.purchasePrice)
-        "Both the buyer's and seller's conveyancer must sign the transaction" using (setOfSigners.containsAll(listOf(inputLandTitleState.landTitleProperties.ownerConveyancer.owningKey, inputAgreementState.buyerConveyancer.owningKey, inputLandTitleState.titleIssuer.owningKey)))
+        "Transaction must be signed by both the conveyancers, title issuer and settling party" using (setOfSigners.size == 4 && setOfSigners.containsAll(listOf(inputLandTitleState.landTitleProperties.ownerConveyancer.owningKey, inputAgreementState.buyerConveyancer.owningKey, inputLandTitleState.titleIssuer.owningKey, inputPaymentConfirmationState.settlingParty.owningKey)))
         "Restrictions in the title state must be equal to the restrictions present in proposed charge and restrictions state" using (outputLandTitleState.charges.toSortedSet().equals(inputProposedChargeAndRestrictionState.charges.toSortedSet()) && outputLandTitleState.restrictions.toSortedSet().equals(inputProposedChargeAndRestrictionState.restrictions.toSortedSet()))
         "Land title state must contain new charges" using (outputLandTitleState.charges.containsAll(inputProposedChargeAndRestrictionState.charges))
         "Old charges should not be removed from the title state" using (outputLandTitleState.charges.containsAll(inputLandTitleState.charges))
-        "Owner lender must be equal to the buyer lender in the proposed charge and restriction state" using(inputProposedChargeAndRestrictionState.buyerLender == outputLandTitleState.landTitleProperties.ownerLender)
         val invariantProperties = setOf(
                 LandTitleState::titleID,
                 LandTitleState::linearId,
@@ -132,7 +129,7 @@ class LandTitleContract: Contract {
                 LandTitleState::titleType,
                 LandTitleState::proposedChargeOrRestrictionLinearId
         )
-        "Only title issuer, buyer and seller Conveyancer, buyer and seller Lender, buyer must be participant to the title state" using(outputLandTitleState.participants.containsAll(listOf(inputLandTitleState.titleIssuer, inputAgreementState.buyerConveyancer, outputLandTitleState.landTitleProperties.ownerLender)) && outputLandTitleState.participants.size == 5)
+        "Only title issuer, ownerConveyancer, buyerConveyancer and ownerLender must be participant to the title state" using(outputLandTitleState.participants.containsAll(listOf(inputLandTitleState.titleIssuer, inputAgreementState.buyerConveyancer, inputAgreementState.sellerConveyancer, outputLandTitleState.landTitleProperties.ownerLender)) && outputLandTitleState.participants.size == 4)
         "Mismatch in the output and input Land Title state" using (checkPropertyInvariants(inputLandTitleState, outputLandTitleState, invariantProperties))
         outputLandTitleState.restrictions.forEach {
             require(it.action == ActionOnRestriction.NO_ACTION) { "Restrictions should have no actions when issued on ledger" }

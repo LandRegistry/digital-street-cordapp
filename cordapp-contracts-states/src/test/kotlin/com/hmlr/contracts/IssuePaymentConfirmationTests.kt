@@ -8,13 +8,13 @@ import net.corda.testing.node.MockServices
 import net.corda.testing.node.ledger
 import org.junit.Test
 
-class AssignBuyerConveyancerToPropsedChargeAndRestrictionStateTests: AbstractContractsStatesTestUtils() {
+class IssuePaymentConfirmationTests: AbstractContractsStatesTestUtils() {
 
     class DummyCommand : TypeOnlyCommandData()
     private var ledgerServices = MockServices(listOf("com.hmlr.contracts"))
 
     @Test
-    fun `must Include Assign Buyer Conveyancer Command`() {
+    fun `must Include IssuePaymentConfirmation Command`() {
         val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(buyerConveyancer = CHARLIE.party, status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER, participants = proposedChargeOrRestrictionState.participants + CHARLIE.party)
         ledgerServices.ledger {
             transaction {
@@ -24,10 +24,10 @@ class AssignBuyerConveyancerToPropsedChargeAndRestrictionStateTests: AbstractCon
                 output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(paymentConfirmationStateLinearId = paymentConfirmationState.linearId.toString()))
                 output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleStateWithBuyerConveyancer)
                 output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
-                command(listOf(BOB.publicKey), LandAgreementContract.Commands.CreateDraftAgreement())
+                command(listOf(BOB.publicKey), ProposedChargeAndRestrictionContract.Commands.AssignBuyerConveyancer())
                 command(listOf(BOB.publicKey), LandTitleContract.Commands.AssignBuyerConveyancer())
-                command(listOf(BOB.publicKey), AssignBuyerConveyancerToPropsedChargeAndRestrictionStateTests.DummyCommand())
-                command(listOf(BOB.publicKey), PaymentConfirmationContract.Commands.IssuePaymentConfirmation())
+                command(listOf(BOB.publicKey), LandAgreementContract.Commands.CreateDraftAgreement())
+                command(listOf(BOB.publicKey), IssuePaymentConfirmationTests.DummyCommand())
                 timeWindow(ledgerServices.clock.instant(), 60.seconds)
                 this.fails()
             }
@@ -55,13 +55,11 @@ class AssignBuyerConveyancerToPropsedChargeAndRestrictionStateTests: AbstractCon
             transaction {
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState)
                 output(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, outputProposedChargeAndRestrictionState)
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(paymentConfirmationStateLinearId = paymentConfirmationState.linearId.toString()))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState)
                 output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleStateWithBuyerConveyancer)
-                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
                 command(listOf(BOB.publicKey), ProposedChargeAndRestrictionContract.Commands.AssignBuyerConveyancer())
                 command(listOf(BOB.publicKey), LandAgreementContract.Commands.CreateDraftAgreement())
                 command(listOf(BOB.publicKey), LandTitleContract.Commands.AssignBuyerConveyancer())
-                command(listOf(BOB.publicKey), PaymentConfirmationContract.Commands.IssuePaymentConfirmation())
                 timeWindow(ledgerServices.clock.instant(), 60.seconds)
                 this.fails()
             }
@@ -89,13 +87,11 @@ class AssignBuyerConveyancerToPropsedChargeAndRestrictionStateTests: AbstractCon
             transaction {
                 input(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleState)
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState)
-                output(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, outputProposedChargeAndRestrictionState)
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(paymentConfirmationStateLinearId = paymentConfirmationState.linearId.toString()))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState)
                 output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleStateWithBuyerConveyancer)
                 command(listOf(BOB.publicKey), ProposedChargeAndRestrictionContract.Commands.AssignBuyerConveyancer())
                 command(listOf(BOB.publicKey), LandAgreementContract.Commands.CreateDraftAgreement())
                 command(listOf(BOB.publicKey), LandTitleContract.Commands.AssignBuyerConveyancer())
-                command(listOf(BOB.publicKey), PaymentConfirmationContract.Commands.IssuePaymentConfirmation())
                 timeWindow(ledgerServices.clock.instant(), 60.seconds)
                 this.fails()
             }
@@ -103,41 +99,19 @@ class AssignBuyerConveyancerToPropsedChargeAndRestrictionStateTests: AbstractCon
                 input(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleState)
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState)
                 output(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, outputProposedChargeAndRestrictionState)
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(paymentConfirmationStateLinearId = paymentConfirmationState.linearId.toString()))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState)
                 output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleStateWithBuyerConveyancer)
-                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
+                output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleStateWithBuyerConveyancer)
                 command(listOf(BOB.publicKey), ProposedChargeAndRestrictionContract.Commands.AssignBuyerConveyancer())
                 command(listOf(BOB.publicKey), LandAgreementContract.Commands.CreateDraftAgreement())
                 command(listOf(BOB.publicKey), LandTitleContract.Commands.AssignBuyerConveyancer())
-                command(listOf(BOB.publicKey), PaymentConfirmationContract.Commands.IssuePaymentConfirmation())
-                timeWindow(ledgerServices.clock.instant(), 60.seconds)
-                this.verifies()
-            }
-        }
-    }
-
-    @Test
-    fun `status of output must be ASSIGN_BUYER_CONVEYANCER`() {
-        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(buyerConveyancer = CHARLIE.party, status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, participants = proposedChargeOrRestrictionState.participants + CHARLIE.party)
-        ledgerServices.ledger {
-            transaction {
-                input(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleState)
-                input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState)
-                output(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, outputProposedChargeAndRestrictionState)
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(paymentConfirmationStateLinearId = paymentConfirmationState.linearId.toString()))
-                output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleStateWithBuyerConveyancer)
-                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
-                command(listOf(BOB.publicKey), LandAgreementContract.Commands.CreateDraftAgreement())
-                command(listOf(BOB.publicKey), LandTitleContract.Commands.AssignBuyerConveyancer())
-                command(listOf(BOB.publicKey), ProposedChargeAndRestrictionContract.Commands.AssignBuyerConveyancer())
-                command(listOf(BOB.publicKey), PaymentConfirmationContract.Commands.IssuePaymentConfirmation())
                 timeWindow(ledgerServices.clock.instant(), 60.seconds)
                 this.fails()
             }
             transaction {
                 input(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleState)
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState)
-                output(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, outputProposedChargeAndRestrictionState.copy(status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER))
+                output(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, outputProposedChargeAndRestrictionState)
                 output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(paymentConfirmationStateLinearId = paymentConfirmationState.linearId.toString()))
                 output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleStateWithBuyerConveyancer)
                 output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
@@ -187,16 +161,16 @@ class AssignBuyerConveyancerToPropsedChargeAndRestrictionStateTests: AbstractCon
     }
 
     @Test
-    fun `must Be Sent To Correct Conveyancer For Them To Add New Charge`() {
+    fun `must Be Sent To Settling Party`() {
         val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(buyerConveyancer = LENDER2.party, status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER, participants = proposedChargeOrRestrictionState.participants + CHARLIE.party)
         ledgerServices.ledger {
             transaction {
                 input(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleState)
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState)
-                output(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, outputProposedChargeAndRestrictionState)
+                output(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, outputProposedChargeAndRestrictionState.copy(buyerConveyancer = CHARLIE.party))
                 output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(paymentConfirmationStateLinearId = paymentConfirmationState.linearId.toString()))
                 output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleStateWithBuyerConveyancer)
-                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState)
+                output(PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID, paymentConfirmationState.copy(participants = listOf()))
                 command(listOf(BOB.publicKey), ProposedChargeAndRestrictionContract.Commands.AssignBuyerConveyancer())
                 command(listOf(BOB.publicKey), LandAgreementContract.Commands.CreateDraftAgreement())
                 command(listOf(BOB.publicKey), LandTitleContract.Commands.AssignBuyerConveyancer())

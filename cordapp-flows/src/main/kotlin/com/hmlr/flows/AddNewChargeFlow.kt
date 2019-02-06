@@ -2,27 +2,14 @@ package com.hmlr.flows
 
 import co.paralleluniverse.fibers.Suspendable
 import com.hmlr.common.utils.FlowLogicCommonMethods
-import com.hmlr.contracts.InstructConveyancerContract
-import com.hmlr.contracts.RequestIssuanceContract
 import com.hmlr.contracts.ProposedChargeAndRestrictionContract
-import com.hmlr.model.ActionOnRestriction
 import com.hmlr.model.Charge
 import com.hmlr.model.DTCConsentStatus
 import com.hmlr.model.Restriction
-import com.hmlr.states.InstructConveyancerState
-import com.hmlr.states.LandTitleState
-import com.hmlr.states.RequestIssuanceState
 import com.hmlr.states.ProposedChargesAndRestrictionsState
 import net.corda.core.contracts.Command
-import net.corda.core.contracts.LinearState
-import net.corda.core.contracts.StateAndRef
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
-import net.corda.core.identity.Party
-import net.corda.core.node.ServiceHub
-import net.corda.core.node.services.Vault
-import net.corda.core.node.services.queryBy
-import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
@@ -33,7 +20,7 @@ import net.corda.core.utilities.ProgressTracker
  */
 @InitiatingFlow
 @StartableByRPC
-class AddNewChargeFlow(val chargeAndRestrictionLinearId: String, val restriction: Set<Restriction>, val charge: Set<Charge>, val buyerLender: Party) : FlowLogic<SignedTransaction>(), FlowLogicCommonMethods {
+class AddNewChargeFlow(val chargeAndRestrictionLinearId: String, val restriction: Set<Restriction>, val charge: Set<Charge>) : FlowLogic<SignedTransaction>(), FlowLogicCommonMethods {
 
     companion object {
         object GENERATING_TRANSACTION : ProgressTracker.Step("Generating new charge transaction")
@@ -75,7 +62,7 @@ class AddNewChargeFlow(val chargeAndRestrictionLinearId: String, val restriction
 
         // Add output state
         val chargesAndRestrictionsState = chargeAndRestrictionStateAndRef.state.data
-        val newChargeAndRestrictionState = chargesAndRestrictionsState.copy(status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, restrictions = restriction, charges = chargesAndRestrictionsState.charges + charge, buyerLender = buyerLender, participants = chargesAndRestrictionsState.participants + buyerLender)
+        val newChargeAndRestrictionState = chargesAndRestrictionsState.copy(status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, restrictions = restriction, charges = chargesAndRestrictionsState.charges + charge)
         tx.addOutputState(newChargeAndRestrictionState, ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID)
 
         // Add consent new charge command

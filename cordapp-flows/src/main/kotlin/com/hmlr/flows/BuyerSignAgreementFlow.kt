@@ -21,7 +21,7 @@ import net.corda.core.utilities.ProgressTracker
 @InitiatingFlow
 @StartableByRPC
 class BuyerSignAgreementFlow(val agreementStateLinearId: String,
-                         val buyerSignature: ByteArray): FlowLogic<SignedTransaction>(), FlowLogicCommonMethods {
+                             val buyerSignature: ByteArray): FlowLogic<SignedTransaction>(), FlowLogicCommonMethods {
 
     companion object {
         object GENERATING_TRANSACTION : ProgressTracker.Step("Generating transaction")

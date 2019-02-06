@@ -1,13 +1,10 @@
 package com.hmlr.contracts
 
 import com.hmlr.model.RequestIssuanceStatus
-import com.hmlr.states.InstructConveyancerState
 import com.hmlr.states.RequestIssuanceState
 import net.corda.core.contracts.*
 import net.corda.core.transactions.LedgerTransaction
-import org.bouncycastle.util.encoders.Hex
 import java.security.PublicKey
-import java.security.Signature
 
 /**
  * Contract code to govern the [RequestIssuanceState]
@@ -63,14 +60,9 @@ class RequestIssuanceContract: Contract {
      * @return [Boolean]
      */
     private fun verifyRequestIssuance(tx: LedgerTransaction, setOfSigners: Set<PublicKey>) = requireThat{
-        "One input should be consumed when requesting issuance of a title on the ledger" using(tx.inputs.size == 1)
-        val input = tx.inputsOfType<InstructConveyancerState>().single()
-
         "There should be exactly one output state when requesting issuance of a title on the ledger" using(tx.outputs.size == 1)
         val output = tx.outputsOfType<RequestIssuanceState>().single()
         "Issuing party and conveyancer party must be different when requesting issuance of a title on the ledger" using (output.titleIssuer != output.sellerConveyancer)
-        "Title id in the instruction state and request issuance state should be equal when requesting issuance of a title on the ledger" using(input.titleID == output.titleID)
-        "Request issuance state must have a linear Id of the consumed instruction state when requesting issuance of a title on the ledger" using(output.instructionStateLinearID == input.linearId.toString())
         "Request for issuance must only be signed by the conveyancer" using(setOfSigners.contains((output.sellerConveyancer.owningKey)) && setOfSigners.size == 1)
         "Only title issuer and conveyancer must be added to the list of participants when requesting issuance of a title on the ledger" using(output.participants.containsAll(listOf(output.sellerConveyancer, output.titleIssuer)) && output.participants.size == 2)
         "Request issuance status must be 'PENDING' when requesting issuance of a title on the ledger" using(output.status == RequestIssuanceStatus.PENDING)

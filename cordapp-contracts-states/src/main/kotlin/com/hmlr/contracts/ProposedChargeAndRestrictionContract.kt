@@ -3,6 +3,7 @@ package com.hmlr.contracts
 import com.hmlr.model.*
 import com.hmlr.states.LandAgreementState
 import com.hmlr.states.LandTitleState
+import com.hmlr.states.PaymentConfirmationState
 import net.corda.core.contracts.*
 import net.corda.core.transactions.LedgerTransaction
 import java.security.PublicKey
@@ -200,7 +201,7 @@ class ProposedChargeAndRestrictionContract: Contract {
         val outputLandTitleAgreementState = tx.outputsOfType<LandAgreementState>().single()
 
         val inputProposedChargesAndRestrictionsState = tx.inputsOfType<ProposedChargesAndRestrictionsState>().single()
-        "There must be exactly three output states" using(tx.outputs.size == 3)
+        "There must be exactly four output states" using(tx.outputs.size == 4)
 
         val outputProposedChargesAndRestrictionsState = tx.outputsOfType<ProposedChargesAndRestrictionsState>().single()
         val invariantProperties = setOf(
@@ -229,17 +230,16 @@ class ProposedChargeAndRestrictionContract: Contract {
         "Only one output should be produced when requesting for discharge" using (tx.outputStates.size == 1)
         val outputProposedChargesAndRestrictionsState = tx.outputsOfType<ProposedChargesAndRestrictionsState>().single()
         "Buyer conveyancer must not be null" using(inputProposedChargesAndRestrictionsState.buyerConveyancer != null)
-        "Buyer lender must not be null" using(outputProposedChargesAndRestrictionsState.buyerLender != null)
         "Only buyer conveyancer can sign the transaction" using(setOfSigners.size == 1 && setOfSigners.contains(inputProposedChargesAndRestrictionsState.buyerConveyancer!!.owningKey))
         outputProposedChargesAndRestrictionsState.restrictions.forEach {
             require(it.action == ActionOnRestriction.ADD_RESTRICTION) { "New Restrictions should have action as ADD_RESTRICTION" }
             require(it.consentGiven) { "Consent given should be true on new Restrictions" }
-            require(it.consentingParty == outputProposedChargesAndRestrictionsState.buyerLender) {"Restrictions must be added on correct lender"}
         }
 
         val invariantProperties = setOf(
                 ProposedChargesAndRestrictionsState::titleID,
                 ProposedChargesAndRestrictionsState::linearId,
+                ProposedChargesAndRestrictionsState::participants,
                 ProposedChargesAndRestrictionsState::ownerConveyancer,
                 ProposedChargesAndRestrictionsState::buyerConveyancer,
                 ProposedChargesAndRestrictionsState::addNewChargeConsented,
@@ -251,10 +251,11 @@ class ProposedChargeAndRestrictionContract: Contract {
     }
 
     private fun verifyTransferLandTitle(tx: LedgerTransaction, setOfSigners: Set<PublicKey>) = requireThat {
-        "Three input states should be consumed while transferring land title" using (tx.inputs.size == 3)
+        "Four input states should be consumed while transferring land title" using (tx.inputs.size == 4)
         val inputProposedChargeAndRestrictionState = tx.inputsOfType<ProposedChargesAndRestrictionsState>().single()
-
-        "Three output states should be produced while transferring land title" using (tx.outputs.size == 3)
+        val inputPaymentConfirmationState = tx.inputsOfType<PaymentConfirmationState>().single()
+        val inputLandTitleState = tx.inputsOfType<LandTitleState>().single()
+        "Four output states should be produced while transferring land title" using (tx.outputs.size == 4)
         val outputProposedChargesAndRestrictionsState = tx.outputsOfType<ProposedChargesAndRestrictionsState>().single()
         val outputLandTitleState = tx.outputsOfType<LandTitleState>().single()
         val inputLandAgreementState = tx.inputsOfType<LandAgreementState>().single()
@@ -262,8 +263,8 @@ class ProposedChargeAndRestrictionContract: Contract {
         "Buyer conveyancer must be null in the output" using (outputProposedChargesAndRestrictionsState.buyerConveyancer == null)
         "Owner conveyancer in the output should be same as buyer conveyancer in the input" using (outputProposedChargesAndRestrictionsState.ownerConveyancer == inputProposedChargeAndRestrictionState.buyerConveyancer)
         "Status of output proposed charge and restriction state should be ISSUED" using (outputProposedChargesAndRestrictionsState.status == DTCConsentStatus.ISSUED)
-        "Only title issuer, buyer and seller Conveyancer, buyer and seller Lender, buyer must be participant to the title state" using(outputProposedChargesAndRestrictionsState.participants.containsAll(listOf(outputLandTitleState.titleIssuer, outputProposedChargesAndRestrictionsState.ownerConveyancer, inputProposedChargeAndRestrictionState.buyerLender!!)) && outputLandTitleState.participants.size == 5)
-        "Transaction should be signed by both the conveyancer and title issuer" using(setOfSigners.containsAll(setOf(inputLandAgreementState.buyerConveyancer.owningKey, inputLandAgreementState.sellerConveyancer.owningKey, outputLandTitleState.titleIssuer.owningKey)))
+        "Only title issuer, ownerConveyancer, buyerConveyancer and ownerLender must be participant to the title state" using(outputLandTitleState.participants.containsAll(listOf(outputLandTitleState.titleIssuer, outputLandTitleState.landTitleProperties.ownerConveyancer, outputLandTitleState.landTitleProperties.ownerLender, inputLandAgreementState.sellerConveyancer)) && outputLandTitleState.participants.size == 4)
+        "Transaction must be signed by both the conveyancers, title issuer and settling party" using(setOfSigners.size == 4 && setOfSigners.containsAll(listOf(inputLandAgreementState.sellerConveyancer.owningKey, inputLandAgreementState.buyerConveyancer.owningKey, inputLandTitleState.titleIssuer.owningKey, inputPaymentConfirmationState.settlingParty.owningKey)))
         outputProposedChargesAndRestrictionsState.restrictions.forEach {
             require(it.action == ActionOnRestriction.NO_ACTION) { "Restrictions should have no actions when issued on ledger" }
             require(!it.consentGiven) { "Consent given should be false on Restrictions when issued on ledger" }

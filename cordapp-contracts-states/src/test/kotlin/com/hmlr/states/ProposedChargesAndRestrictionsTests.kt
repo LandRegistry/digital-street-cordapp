@@ -103,16 +103,4 @@ class ProposedChargesAndRestrictionsTests: AbstractContractsStatesTestUtils() {
         // Is the buyerConveyancer field of the correct type?
         assertEquals(ProposedChargesAndRestrictionsState::class.java.getDeclaredField("buyerConveyancer").type, Party::class.java)
     }
-
-    /**
-     * Test 9.
-     *
-     */
-    @Test
-    fun `has buyerLender Field Of Correct Type`() {
-        // Does the buyerLender field exist?
-        ProposedChargesAndRestrictionsState::class.java.getDeclaredField("buyerLender")
-        // Is the buyerLender field of the correct type?
-        assertEquals(ProposedChargesAndRestrictionsState::class.java.getDeclaredField("buyerLender").type, Party::class.java)
-    }
 }
