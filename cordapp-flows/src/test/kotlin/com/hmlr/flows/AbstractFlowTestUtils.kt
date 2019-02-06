@@ -247,7 +247,7 @@ abstract class AbstractFlowTestUtils {
     protected fun addNewCharge(callingParty: StartedMockNode): SignedTransaction? {
         val restrictionText = "No disposition of the registered estate by the proprietor of the registered estate is to be registered"
         val charge = Charge(Instant.now(), sellerLender.info.singleIdentity(), 100.POUNDS)
-        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, sellerLender.info.singleIdentity(), ActionOnRestriction.ADD_RESTRICTION, true, charge)
+        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, buyerLender.info.singleIdentity(), ActionOnRestriction.ADD_RESTRICTION, true, charge)
 
         createDraftAgreement(sellerConveyancer)
         mockNetwork.waitQuiescent()
@@ -259,7 +259,7 @@ abstract class AbstractFlowTestUtils {
             val states = sellerConveyancer.services.vaultService.queryBy(LandTitleState::class.java).states
             proposedChargeOrRestrictionLinearID = states[0].state.data.proposedChargeOrRestrictionLinearId.toString()
         }
-        val flow = AddNewChargeFlow(proposedChargeOrRestrictionLinearID!!, setOf(chargeRestriction), setOf(charge))
+        val flow = AddNewChargeFlow(proposedChargeOrRestrictionLinearID!!, setOf(chargeRestriction), setOf(charge), buyerLender.info.singleIdentity())
         val future = callingParty.startFlow(flow)
         return future.getOrThrow()
     }

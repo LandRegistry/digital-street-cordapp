@@ -20,8 +20,8 @@ class AddConsentForNewChargeTests: AbstractContractsStatesTestUtils() {
     @Test
     fun `must Include Add Consent For New Charge Command`() {
         val charge = Charge(date = Instant.now(), lender = LENDER2.party, amount = 200.POUNDS)
-        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER1.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
-        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party)
+        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER2.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
+        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party, buyerLender = LENDER2.party)
         ledgerServices.ledger {
             transaction {
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState.copy(status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER,  buyerConveyancer = CHARLIE.party))
@@ -41,8 +41,8 @@ class AddConsentForNewChargeTests: AbstractContractsStatesTestUtils() {
     @Test
     fun `must Include Exactly One Input State`() {
         val charge = Charge(date = Instant.now(), lender = LENDER2.party, amount = 200.POUNDS)
-        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER1.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
-        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party)
+        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER2.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
+        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party, buyerLender = LENDER2.party)
         ledgerServices.ledger {
             transaction {
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState.copy(status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER,  buyerConveyancer = CHARLIE.party))
@@ -63,8 +63,8 @@ class AddConsentForNewChargeTests: AbstractContractsStatesTestUtils() {
     @Test
     fun `must Include Exactly One Output State`() {
         val charge = Charge(date = Instant.now(), lender = LENDER2.party, amount = 200.POUNDS)
-        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER1.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
-        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party)
+        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER2.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
+        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party, buyerLender = LENDER2.party)
         ledgerServices.ledger {
             transaction {
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState.copy(status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER,  buyerConveyancer = CHARLIE.party))
@@ -83,8 +83,8 @@ class AddConsentForNewChargeTests: AbstractContractsStatesTestUtils() {
     @Test
     fun `must Be Signed By The Buyer Conveyancer`() {
         val charge = Charge(date = Instant.now(), lender = LENDER2.party, amount = 200.POUNDS)
-        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER1.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
-        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party)
+        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER2.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
+        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party, buyerLender = LENDER2.party)
         ledgerServices.ledger {
             transaction {
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState.copy(status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER,  buyerConveyancer = CHARLIE.party))
@@ -104,8 +104,8 @@ class AddConsentForNewChargeTests: AbstractContractsStatesTestUtils() {
     @Test
     fun `status Of Input State Must Be ASSIGN_BUYER_CONVEYANCER`() {
         val charge = Charge(date = Instant.now(), lender = LENDER2.party, amount = 200.POUNDS)
-        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER1.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
-        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party)
+        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER2.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
+        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party, buyerLender = LENDER2.party)
         ledgerServices.ledger {
             transaction {
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState.copy(status = DTCConsentStatus.CONSENT_FOR_DISCHARGE,  buyerConveyancer = CHARLIE.party))
@@ -125,8 +125,8 @@ class AddConsentForNewChargeTests: AbstractContractsStatesTestUtils() {
     @Test
     fun `status Of Output State Must Be CONSENT_FOR_NEW_CHARGE`() {
         val charge = Charge(date = Instant.now(), lender = LENDER2.party, amount = 200.POUNDS)
-        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER1.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
-        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party)
+        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER2.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
+        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party, buyerLender = LENDER2.party)
         ledgerServices.ledger {
             transaction {
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState.copy(status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER,  buyerConveyancer = CHARLIE.party))
@@ -146,12 +146,12 @@ class AddConsentForNewChargeTests: AbstractContractsStatesTestUtils() {
     @Test
     fun `new Restrictions Must Be Added With Consents`() {
         val charge = Charge(date = Instant.now(), lender = LENDER2.party, amount = 200.POUNDS)
-        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER1.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
-        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party)
+        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER2.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
+        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party, buyerLender = LENDER2.party)
         ledgerServices.ledger {
             transaction {
-                val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER1.party, ActionOnRestriction.ADD_RESTRICTION, false, charge)
-                val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party)
+                val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER2.party, ActionOnRestriction.ADD_RESTRICTION, false, charge)
+                val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party, buyerLender = LENDER2.party)
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState.copy(status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER,  buyerConveyancer = CHARLIE.party))
                 output(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, outputProposedChargeAndRestrictionState.copy(status = DTCConsentStatus.ISSUED))
                 command(listOf(CHARLIE.publicKey), ProposedChargeAndRestrictionContract.Commands.AddConsentForNewCharge())
@@ -169,12 +169,12 @@ class AddConsentForNewChargeTests: AbstractContractsStatesTestUtils() {
     @Test
     fun `new Restrictions Added Must Have Action ADD_RESTRICTION`() {
         val charge = Charge(date = Instant.now(), lender = LENDER2.party, amount = 200.POUNDS)
-        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER1.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
-        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party)
+        val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER2.party, ActionOnRestriction.ADD_RESTRICTION, true, charge)
+        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party, buyerLender = LENDER2.party)
         ledgerServices.ledger {
             transaction {
-                val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER1.party, ActionOnRestriction.NO_ACTION, true, charge)
-                val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party)
+                val chargeRestriction = ChargeRestriction("CBCR", restrictionText, LENDER2.party, ActionOnRestriction.NO_ACTION, true, charge)
+                val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(restrictions = setOf(chargeRestriction), status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, charges = setOf(charge), buyerConveyancer = CHARLIE.party, buyerLender = LENDER2.party)
                 input(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, proposedChargeOrRestrictionState.copy(status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER,  buyerConveyancer = CHARLIE.party))
                 output(ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID, outputProposedChargeAndRestrictionState.copy(status = DTCConsentStatus.ISSUED))
                 command(listOf(CHARLIE.publicKey), ProposedChargeAndRestrictionContract.Commands.AddConsentForNewCharge())

@@ -13,6 +13,7 @@ import net.corda.finance.POUNDS
 import net.corda.node.services.Permissions
 import net.corda.testing.core.expectEvents
 import net.corda.testing.core.parallel
+import net.corda.testing.core.singleIdentity
 import net.corda.testing.driver.DriverParameters
 import net.corda.testing.driver.driver
 import net.corda.testing.node.User
@@ -79,6 +80,9 @@ class IntegrationTest: AbstractIntegrationTestUtils() {
             val lenderAClient = CordaRPCClient(lenderA.rpcAddress)
             val lenderAProxy = lenderAClient.start("conveyancerUser", "testPassword2").proxy
 
+            val lenderBClient = CordaRPCClient(lenderB.rpcAddress)
+            val lenderBProxy = lenderBClient.start("conveyancerUser", "testPassword2").proxy
+
             val conveyancerAVaultUpdates = conveyancerAProxy.vaultTrackBy<LandTitleState>().updates
 
             // STEP: 1
@@ -127,7 +131,7 @@ class IntegrationTest: AbstractIntegrationTestUtils() {
             landTitleState = conveyancerAProxy.vaultQuery(LandTitleState::class.java)
             landTitleStateLinearId = landTitleState.states[0].state.data.linearId.toString()
             completionDate = Instant.now().plusSeconds(60)
-            val agreementState = LandAgreementState(titleId, buyer, seller, conveyancerBHandle.nodeInfo.legalIdentities.get(0), conveyancerAHandle.nodeInfo.legalIdentities.get(0), creationDate, completionDate!!, 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, landTitleStateLinearId, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false)
+            var agreementState = LandAgreementState(titleId, buyer, seller, conveyancerBHandle.nodeInfo.legalIdentities.get(0), conveyancerAHandle.nodeInfo.legalIdentities.get(0), creationDate, completionDate!!, 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, landTitleStateLinearId, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false)
             conveyancerAProxy.startFlow(::DraftAgreementFlow, agreementState, conveyancerBHandle.nodeInfo.legalIdentities.get(0))
 
             // wait for 5sec for transaction to get committed on vault
@@ -135,19 +139,19 @@ class IntegrationTest: AbstractIntegrationTestUtils() {
 
             // STEP: 6
             // start consent for new charge
-            val proposedChargeRestrictionState = conveyancerBProxy.vaultQuery(ProposedChargesAndRestrictionsState::class.java)
-            val proposedChargeRestrictionStateLinearId = proposedChargeRestrictionState.states[0].state.data.linearId.toString()
-            val charge = Charge(Instant.now(), lenderA.nodeInfo.legalIdentities[0], 100.POUNDS)
-            val chargeRestriction = ChargeRestriction("CBCR", restrictionText, lenderA.nodeInfo.legalIdentities[0], ActionOnRestriction.ADD_RESTRICTION, true, charge)
-            conveyancerBProxy.startFlow(::AddNewChargeFlow, proposedChargeRestrictionStateLinearId, setOf(chargeRestriction), setOf(charge))
+            var proposedChargeRestrictionState = conveyancerBProxy.vaultQuery(ProposedChargesAndRestrictionsState::class.java)
+            var proposedChargeRestrictionStateLinearId = proposedChargeRestrictionState.states[0].state.data.linearId.toString()
+            var charge = Charge(Instant.now(), lenderA.nodeInfo.legalIdentities[0], 100.POUNDS)
+            var chargeRestriction = ChargeRestriction("CBCR", restrictionText, lenderB.nodeInfo.legalIdentities[0], ActionOnRestriction.ADD_RESTRICTION, true, charge)
+            conveyancerBProxy.startFlow(::AddNewChargeFlow, proposedChargeRestrictionStateLinearId, setOf(chargeRestriction), setOf(charge), lenderB.nodeInfo.singleIdentity())
 
             // wait for 5sec for transaction to get committed on vault
             Thread.sleep(5000)
 
             // STEP: 7
             // Approve sales agreement
-            val conveyancerAagreementState = conveyancerAProxy.vaultQuery(LandAgreementState::class.java)
-            val agreementStateLinearId = conveyancerAagreementState.states[0].state.data.linearId.toString()
+            var conveyancerAagreementState = conveyancerAProxy.vaultQuery(LandAgreementState::class.java)
+            var agreementStateLinearId = conveyancerAagreementState.states[0].state.data.linearId.toString()
             conveyancerBProxy.startFlow(::ApproveAgreementFlow, agreementStateLinearId)
 
             // wait for 5sec for transaction to get committed on vault
@@ -169,12 +173,89 @@ class IntegrationTest: AbstractIntegrationTestUtils() {
 
             // STEP: 10
             // Query for Land Title state to check for new owner if everything goes right
-            val landTitleStateAfterTransfer = conveyancerBProxy.vaultQuery(LandTitleState::class.java)
+            var landTitleStateAfterTransfer = conveyancerBProxy.vaultQuery(LandTitleState::class.java)
             assertEquals(landTitleStateAfterTransfer.states[0].state.data.status, LandTitleStatus.TRANSFERRED)
             assertEquals(landTitleStateAfterTransfer.states[0].state.data.landTitleProperties.owner.userID, buyer.userID)
+            assertEquals(landTitleStateAfterTransfer.states[0].state.data.landTitleProperties.ownerConveyancer, conveyancerBHandle.nodeInfo.singleIdentity())
+            assertEquals(landTitleStateAfterTransfer.states[0].state.data.landTitleProperties.ownerLender, lenderB.nodeInfo.singleIdentity())
+            // Query for Land Agreement state
+            var landAgreementState = conveyancerBProxy.vaultQuery(LandAgreementState::class.java)
+            assertEquals(landAgreementState.states[0].state.data.status, AgreementStatus.TRANSFERRED)
+
+            // now test the reverse process of transfer
+            Thread.sleep(60000)
+            // STEP: 3
+            // start request for discharge
+             landTitleState = conveyancerBProxy.vaultQuery(LandTitleState::class.java)
+             landTitleStateLinearId = landTitleState.states[0].state.data.linearId.toString()
+            conveyancerBProxy.startFlow(::RequestForDischargeFlow, landTitleStateLinearId)
+
+            // wait for 5sec for transaction to get committed on vault
+            Thread.sleep(5000)
+
+            // STEP: 4
+            // start consent for discharge
+            landTitleState = lenderBProxy.vaultQuery(LandTitleState::class.java)
+            landTitleStateLinearId = landTitleState.states[0].state.data.linearId.toString()
+            lenderBProxy.startFlow(::ConsentForDischargeFlow, landTitleStateLinearId)
+
+            // wait for 5sec for transaction to get committed on vault
+            Thread.sleep(5000)
+
+            // STEP: 5
+            // start draft agreement flow
+            landTitleState = conveyancerAProxy.vaultQuery(LandTitleState::class.java)
+            landTitleStateLinearId = landTitleState.states[0].state.data.linearId.toString()
+            completionDate = Instant.now().plusSeconds(60)
+            agreementState = LandAgreementState(titleId, seller, buyer, conveyancerAHandle.nodeInfo.legalIdentities.get(0), conveyancerBHandle.nodeInfo.legalIdentities.get(0), creationDate, completionDate!!, 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, landTitleStateLinearId, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false)
+            var agreementId = agreementState.linearId.toString()
+            conveyancerBProxy.startFlow(::DraftAgreementFlow, agreementState, conveyancerAHandle.nodeInfo.legalIdentities.get(0))
+
+            // wait for 5sec for transaction to get committed on vault
+            Thread.sleep(5000)
+
+            // STEP: 6
+            // start consent for new charge
+             proposedChargeRestrictionState = conveyancerAProxy.vaultQuery(ProposedChargesAndRestrictionsState::class.java)
+             proposedChargeRestrictionStateLinearId = proposedChargeRestrictionState.states[0].state.data.linearId.toString()
+             charge = Charge(Instant.now(), lenderB.nodeInfo.legalIdentities[0], 100.POUNDS)
+             chargeRestriction = ChargeRestriction("CBCR", restrictionText, lenderA.nodeInfo.legalIdentities[0], ActionOnRestriction.ADD_RESTRICTION, true, charge)
+            conveyancerAProxy.startFlow(::AddNewChargeFlow, proposedChargeRestrictionStateLinearId, setOf(chargeRestriction), setOf(charge), lenderA.nodeInfo.singleIdentity())
+
+            // wait for 5sec for transaction to get committed on vault
+            Thread.sleep(5000)
+
+            // STEP: 7
+            // Approve sales agreement
+             //conveyancerAagreementState = conveyancerAProxy.vaultQuery(LandAgreementState::class.java)
+             //agreementStateLinearId = conveyancerAagreementState.states[0].state.data.linearId.toString()
+            conveyancerAProxy.startFlow(::ApproveAgreementFlow, agreementId)
+
+            // wait for 5sec for transaction to get committed on vault
+            Thread.sleep(5000)
+
+            // STEP: 8
+            // Seller signs sales agreement
+            conveyancerBProxy.startFlow(::SellerSignAgreementFlow, agreementId, sign(titleId, buyerPrivateKey))
+
+            // wait for 5sec for transaction to get committed on vault
+            Thread.sleep(5000)
+
+            // STEP: 9
+            // Buyer signs sales agreement
+            conveyancerAProxy.startFlow(::BuyerSignAgreementFlow, agreementId, sign(titleId, sellerPrivateKey))
+
+            // wait for 5sec for transaction to get committed on vault
+            Thread.sleep(60000)
+
+            // STEP: 10
+            // Query for Land Title state to check for new owner if everything goes right
+             landTitleStateAfterTransfer = conveyancerAProxy.vaultQuery(LandTitleState::class.java)
+            assertEquals(landTitleStateAfterTransfer.states[0].state.data.status, LandTitleStatus.TRANSFERRED)
+            assertEquals(landTitleStateAfterTransfer.states[0].state.data.landTitleProperties.owner.userID, seller.userID)
 
             // Query for Land Agreement state
-            val landAgreementState = conveyancerBProxy.vaultQuery(LandAgreementState::class.java)
+             landAgreementState = conveyancerAProxy.vaultQuery(LandAgreementState::class.java)
             assertEquals(landAgreementState.states[0].state.data.status, AgreementStatus.TRANSFERRED)
         }
     }

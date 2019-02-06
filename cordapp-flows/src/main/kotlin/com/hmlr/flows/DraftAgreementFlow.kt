@@ -88,14 +88,14 @@ class DraftAgreementFlow(val agreementState: LandAgreementState,
 
         // add commands
         val landTitleStateData = landTitleStateAndRef.state.data
-        val assignBuyerConveyancerCommand = Command(LandTitleContract.Commands.AssignBuyerConveyancer(), landTitleStateData.landTitleProperties.ownerConveyancer.owningKey)
+        val assignBuyerConveyancerToLandTitleStateCommand = Command(LandTitleContract.Commands.AssignBuyerConveyancer(), landTitleStateData.landTitleProperties.ownerConveyancer.owningKey)
         val createDraftAgreementCommand = Command(LandAgreementContract.Commands.CreateDraftAgreement(), landTitleStateData.landTitleProperties.ownerConveyancer.owningKey)
-        val assignBuyerConveyancer = Command(ProposedChargeAndRestrictionContract.Commands.AssignBuyerConveyancer() ,listOf(agreementState.sellerConveyancer.owningKey))
+        val assignBuyerConveyancerToChargeStateCommand = Command(ProposedChargeAndRestrictionContract.Commands.AssignBuyerConveyancer() ,listOf(agreementState.sellerConveyancer.owningKey))
 
 
-        tx.addCommand(assignBuyerConveyancerCommand)
+        tx.addCommand(assignBuyerConveyancerToLandTitleStateCommand)
         tx.addCommand(createDraftAgreementCommand)
-        tx.addCommand(assignBuyerConveyancer)
+        tx.addCommand(assignBuyerConveyancerToChargeStateCommand)
 
         tx.setTimeWindow(serviceHub.clock.instant(), 60.seconds)
 

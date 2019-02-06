@@ -76,7 +76,7 @@ class LandAgreementContract: Contract {
         val creationDateInstant = outputLandAgreementState.creationDate.atStartOfDay().toInstant(ZoneOffset.UTC)
 
         "Transaction must be signed by the seller's conveyancer" using (setOfSigners.size == 1 && setOfSigners.contains(outputLandAgreementState.sellerConveyancer.owningKey))
-        "Seller must be the owner of the consumed land title state" using (outputLandAgreementState.seller == inputLandTitleState.landTitleProperties.owner)
+        "Seller must be the owner of the consumed land title state" using (outputLandAgreementState.seller.equals(inputLandTitleState.landTitleProperties.owner.copy(signature = outputLandAgreementState.seller.signature)))
         "Drafting conveyancer must be the owner's conveyancer" using (outputLandAgreementState.sellerConveyancer == inputLandTitleState.landTitleProperties.ownerConveyancer)
         "Contract creation date cannot be in the past" using (currentDate <= outputLandAgreementState.creationDate)
         "Completion date cannot be in the past" using (currentTime <= outputLandAgreementState.completionDate)

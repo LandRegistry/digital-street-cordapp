@@ -14,6 +14,7 @@ import net.corda.core.identity.Party
 data class ProposedChargesAndRestrictionsState(val titleID: String,
                                                val ownerConveyancer: Party,
                                                val buyerConveyancer: Party?,
+                                               val buyerLender: Party?,
                                                val restrictions: Set<Restriction>,
                                                val charges: Set<Charge>,
                                                val dischargeConsented: Boolean,

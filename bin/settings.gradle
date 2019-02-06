@@ -1,5 +1,0 @@
-include 'cordapp-contracts-states'
-include 'cordapp-flows'
-include 'cordapp-common'
-
-

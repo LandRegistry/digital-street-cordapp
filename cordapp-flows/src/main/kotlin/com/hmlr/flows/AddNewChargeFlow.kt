@@ -18,6 +18,7 @@ import net.corda.core.contracts.LinearState
 import net.corda.core.contracts.StateAndRef
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
+import net.corda.core.identity.Party
 import net.corda.core.node.ServiceHub
 import net.corda.core.node.services.Vault
 import net.corda.core.node.services.queryBy
@@ -32,7 +33,7 @@ import net.corda.core.utilities.ProgressTracker
  */
 @InitiatingFlow
 @StartableByRPC
-class AddNewChargeFlow(val chargeAndRestrictionLinearId: String, val restriction: Set<Restriction>, val charge: Set<Charge>) : FlowLogic<SignedTransaction>(), FlowLogicCommonMethods {
+class AddNewChargeFlow(val chargeAndRestrictionLinearId: String, val restriction: Set<Restriction>, val charge: Set<Charge>, val buyerLender: Party) : FlowLogic<SignedTransaction>(), FlowLogicCommonMethods {
 
     companion object {
         object GENERATING_TRANSACTION : ProgressTracker.Step("Generating new charge transaction")
@@ -74,7 +75,7 @@ class AddNewChargeFlow(val chargeAndRestrictionLinearId: String, val restriction
 
         // Add output state
         val chargesAndRestrictionsState = chargeAndRestrictionStateAndRef.state.data
-        val newChargeAndRestrictionState = chargesAndRestrictionsState.copy(status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, restrictions = restriction, charges = chargesAndRestrictionsState.charges + charge)
+        val newChargeAndRestrictionState = chargesAndRestrictionsState.copy(status = DTCConsentStatus.CONSENT_FOR_NEW_CHARGE, restrictions = restriction, charges = chargesAndRestrictionsState.charges + charge, buyerLender = buyerLender, participants = chargesAndRestrictionsState.participants + buyerLender)
         tx.addOutputState(newChargeAndRestrictionState, ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID)
 
         // Add consent new charge command

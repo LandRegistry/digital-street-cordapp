@@ -125,7 +125,7 @@ class IssueLandTitleFlow(val flowSession: FlowSession) : FlowLogic<SignedTransac
             // add output states
             try {
                 outputLandTitleState = getLandTitleData(inputRequestIssuanceState.state.data.titleID, outputRequestIssuanceState)
-                outputProposedChargesAndRestrictionsState = ProposedChargesAndRestrictionsState(titleID = inputRequestIssuanceState.state.data.titleID, ownerConveyancer = outputLandTitleState.landTitleProperties.ownerConveyancer, buyerConveyancer = null, restrictions = outputLandTitleState.restrictions, charges = outputLandTitleState.charges, dischargeConsented = false, addNewChargeConsented = false, status = DTCConsentStatus.ISSUED, participants = outputLandTitleState.participants)
+                outputProposedChargesAndRestrictionsState = ProposedChargesAndRestrictionsState(titleID = inputRequestIssuanceState.state.data.titleID, ownerConveyancer = outputLandTitleState.landTitleProperties.ownerConveyancer, buyerConveyancer = null, restrictions = outputLandTitleState.restrictions, charges = outputLandTitleState.charges, dischargeConsented = false, addNewChargeConsented = false, status = DTCConsentStatus.ISSUED, participants = outputLandTitleState.participants, buyerLender = null)
                 outputLandTitleState = outputLandTitleState.copy(proposedChargeOrRestrictionLinearId = outputProposedChargesAndRestrictionsState.linearId.toString())
             } catch (ex: Exception) {
                 // if there is an error fetching title details from external system, notify the user and ask to retry

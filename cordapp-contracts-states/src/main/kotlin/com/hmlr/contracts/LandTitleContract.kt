@@ -124,6 +124,7 @@ class LandTitleContract: Contract {
         "Restrictions in the title state must be equal to the restrictions present in proposed charge and restrictions state" using (outputLandTitleState.charges.toSortedSet().equals(inputProposedChargeAndRestrictionState.charges.toSortedSet()) && outputLandTitleState.restrictions.toSortedSet().equals(inputProposedChargeAndRestrictionState.restrictions.toSortedSet()))
         "Land title state must contain new charges" using (outputLandTitleState.charges.containsAll(inputProposedChargeAndRestrictionState.charges))
         "Old charges should not be removed from the title state" using (outputLandTitleState.charges.containsAll(inputLandTitleState.charges))
+        "Owner lender must be equal to the buyer lender in the proposed charge and restriction state" using(inputProposedChargeAndRestrictionState.buyerLender == outputLandTitleState.landTitleProperties.ownerLender)
         val invariantProperties = setOf(
                 LandTitleState::titleID,
                 LandTitleState::linearId,
@@ -131,7 +132,7 @@ class LandTitleContract: Contract {
                 LandTitleState::titleType,
                 LandTitleState::proposedChargeOrRestrictionLinearId
         )
-        "Only title issuer, ownerConveyancer and ownerLender must be participant to the title state" using(outputLandTitleState.participants.containsAll(listOf(inputLandTitleState.titleIssuer, inputAgreementState.buyerConveyancer, outputLandTitleState.landTitleProperties.ownerLender)) && outputLandTitleState.participants.size == 3)
+        "Only title issuer, buyer and seller Conveyancer, buyer and seller Lender, buyer must be participant to the title state" using(outputLandTitleState.participants.containsAll(listOf(inputLandTitleState.titleIssuer, inputAgreementState.buyerConveyancer, outputLandTitleState.landTitleProperties.ownerLender)) && outputLandTitleState.participants.size == 5)
         "Mismatch in the output and input Land Title state" using (checkPropertyInvariants(inputLandTitleState, outputLandTitleState, invariantProperties))
         outputLandTitleState.restrictions.forEach {
             require(it.action == ActionOnRestriction.NO_ACTION) { "Restrictions should have no actions when issued on ledger" }

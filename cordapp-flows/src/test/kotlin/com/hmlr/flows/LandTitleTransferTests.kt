@@ -19,6 +19,7 @@ class LandTitleTransferTests : AbstractFlowTestUtils() {
             assert(states[0].state.data.status ==  LandTitleStatus.TRANSFERRED)
             assert(states[0].state.data.landTitleProperties.owner.userID == buyer.userID)
             assert(states[0].state.data.landTitleProperties.ownerConveyancer == buyerConveyancer.info.legalIdentities.single())
+            assert(states[0].state.data.landTitleProperties.ownerLender == buyerLender.info.legalIdentities.single())
         }
 
         buyerConveyancer.transaction {
@@ -27,14 +28,16 @@ class LandTitleTransferTests : AbstractFlowTestUtils() {
             assert(states[0].state.data.status ==  LandTitleStatus.TRANSFERRED)
             assert(states[0].state.data.landTitleProperties.owner.userID == buyer.userID)
             assert(states[0].state.data.landTitleProperties.ownerConveyancer == buyerConveyancer.info.legalIdentities.single())
+            assert(states[0].state.data.landTitleProperties.ownerLender == buyerLender.info.legalIdentities.single())
         }
 
-        sellerLender.transaction {
+        buyerLender.transaction {
             val states = sellerLender.services.vaultService.queryBy(LandTitleState::class.java).states
             assert(states.size == 1)
             assert(states[0].state.data.status ==  LandTitleStatus.TRANSFERRED)
             assert(states[0].state.data.landTitleProperties.owner.userID == buyer.userID)
             assert(states[0].state.data.landTitleProperties.ownerConveyancer == buyerConveyancer.info.legalIdentities.single())
+            assert(states[0].state.data.landTitleProperties.ownerLender == buyerLender.info.legalIdentities.single())
         }
     }
 }

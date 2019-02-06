@@ -80,9 +80,9 @@ class InitiateLandTitleTransferFlow(val ref: StateRef): FlowLogic<Unit>(), FlowL
 
                 val newRestrictionStatus = serviceHub.updateRestrictions(chargeAndRestrictionState.restrictions, ActionOnRestriction.NO_ACTION,false)
                 val newOwner = agreementState.buyer
-                val newLandTitleOutputState = landTitleState.copy(status = LandTitleStatus.TRANSFERRED, landTitleProperties = landTitleState.landTitleProperties.copy(ownerConveyancer = agreementState.buyerConveyancer, owner = newOwner), lastSoldValue = agreementState.purchasePrice, restrictions = newRestrictionStatus, participants = listOf(agreementState.buyerConveyancer, landTitleState.titleIssuer, landTitleState.landTitleProperties.ownerLender), charges = chargeAndRestrictionState.charges)
+                val newLandTitleOutputState = landTitleState.copy(status = LandTitleStatus.TRANSFERRED, landTitleProperties = landTitleState.landTitleProperties.copy(ownerConveyancer = agreementState.buyerConveyancer, owner = newOwner, ownerLender = chargeAndRestrictionState.buyerLender!!), lastSoldValue = agreementState.purchasePrice, restrictions = newRestrictionStatus, participants = listOf(agreementState.buyerConveyancer, landTitleState.titleIssuer, chargeAndRestrictionState.buyerLender!!, agreementState.sellerConveyancer, landTitleState.landTitleProperties.ownerLender), charges = chargeAndRestrictionState.charges)
                 val newAgreementState = agreementState.copy(status = AgreementStatus.TRANSFERRED)
-                val newChargeAndRestrictionState = chargeAndRestrictionState.copy(ownerConveyancer = chargeAndRestrictionState.buyerConveyancer!!, buyerConveyancer = null, status = DTCConsentStatus.ISSUED, restrictions = newRestrictionStatus)
+                val newChargeAndRestrictionState = chargeAndRestrictionState.copy(ownerConveyancer = chargeAndRestrictionState.buyerConveyancer!!, buyerConveyancer = null, buyerLender = null, status = DTCConsentStatus.ISSUED, restrictions = newRestrictionStatus, participants = listOf(agreementState.buyerConveyancer, landTitleState.titleIssuer, chargeAndRestrictionState.buyerLender!!, agreementState.sellerConveyancer, landTitleState.landTitleProperties.ownerLender))
 
                 // add input states
                 tx.addInputState(landTitleStateAndRef)
@@ -93,7 +93,6 @@ class InitiateLandTitleTransferFlow(val ref: StateRef): FlowLogic<Unit>(), FlowL
                 tx.addOutputState(newAgreementState, LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID)
                 tx.addOutputState(newLandTitleOutputState, LandTitleContract.LAND_TITLE_CONTRACT_ID)
                 tx.addOutputState(newChargeAndRestrictionState, ProposedChargeAndRestrictionContract.PROPOSED_CHARGE_RESTRICTION_CONTRACT_ID)
-
 
                 // add commands
                 val landTransferCommand = Command(LandTitleContract.Commands.TransferLandTitle(), listOf(agreementState.buyerConveyancer.owningKey, agreementState.sellerConveyancer.owningKey, landTitleState.titleIssuer.owningKey))
