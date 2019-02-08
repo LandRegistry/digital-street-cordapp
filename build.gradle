@@ -83,7 +83,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     testCompile "junit:junit:$junit_version"
-    compile "com.github.jkcclemens:khttp:-SNAPSHOT"
+    compile "khttp:khttp:0.1.0"
     compile "org.jbundle.util:org.jbundle.util.jbackup:2.0.0"
     compile "net.sf.webtestfixtures:webtestfixtures:2.0.1.3"
 
