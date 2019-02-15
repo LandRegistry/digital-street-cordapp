@@ -38,11 +38,13 @@ Start the nodes by running the following command from the root of the digital-st
 * Unix/Mac OSX: `kotlin-source/build/nodes/runnodes`
 * Windows: call `kotlin-source\build\nodes\runnodes.bat`
 
-This will start 4 Corda Nodes
+This will start 6 Corda Nodes
 
 * `HMLR`
 * `Conveyancer1`
 * `Conveyancer2`
+* `Lender1`
+* `SettlingParty`
 * `Notary`
 
 ### Running the Unit tests
@@ -71,47 +73,27 @@ The integration test script covers the end to end journey of the CorDapp as desc
 
 #### STEP: 1
 
-* A Seller instructs a Conveyancer for a particular land title which he owns through the HMLR Corda node
-* This will create a transaction with InstructConveyancerState between the HMLR and the Conveyancer node
+* A Seller's Conveyancer requests HMLR a particular land title which the seller owns
+* This will create a transaction with RequestIssuanceState between the HMLR and the Conveyancer node
 
            ----------------------------
            |                          |
            |                          |
-           | InstructConveyancer      |
+           | RequestIssuanceState     |
            |                          |
            |    - titleID             |
-           |    - caseReferenceNumber |
            |    - titleIssuer         |
-           |    - conveyancer         |
-           |    - user                |
+           |    - seller              |
+           |    - sellerConveyancer   |
+           |    - status              |
            |                          |
            |                          |
            ----------------------------
 
-#### STEP: 2.1
-
-* The instructed Conveyancer accepts and requests HMLR to issue the land title on the Corda ledger
-* This will create a transaction with a RequestIssuanceState between the HMLR and Conveyancer nodes
-* The InstructConveyancerState is consumed and remains on the ledger as a historic state
-
-           ---------------------------------
-           |                               |
-           |                               |
-           |  RequestIssuanceState         |
-           |                               |
-           |    - titleID                  |
-           |    - titleIssuer              |
-           |    - seller                   |
-           |    - sellerConveyancer        |
-           |    - instructionStateLinearId |
-           |    - status                   |
-           |                               |
-           ---------------------------------
-
-#### STEP: 2.2
+#### STEP: 2
 
 * HMLR will then automatically issue a land title on the Corda ledger by invoking a sub-flow
-* This will create a transaction with a new LandTitleState being issued on the HMLR and Conveyancer nodes
+* This will create a transaction with new LandTitleState, ProposedChargesAndRestrictionState being issued on the HMLR, Seller's Conveyancer and Seller's Lender nodes
 
            ---------------------------------
            |                               |
@@ -126,20 +108,46 @@ The integration test script covers the end to end journey of the CorDapp as desc
            |    - status                   |
            |                               | 
            ---------------------------------
+       
+           ---------------------------------------
+           |                                     |
+           |                                     |
+           |  ProposedChargesAndRestrictionsState|
+           |                                     |
+           |    - titleID                        |
+           |    - ownerConveyancer               |
+           |    - buyerConveyancer               |
+           |    - restrictions                   |
+           |    - charges                        |
+           |    - status                         |
+           |                                     |  
+           |                                     |
+           |                                     | 
+           ---------------------------------------
 
 #### STEP: 3
 
-* The Seller's Conveyancer would then create a Sales contract with the Buyer's Conveyancer
-* This will create a transaction with a LandAgreementState issued on both conveyancer's nodes
+* The Seller's Conveyancer would then request seller's lender to provide consent for discharge
+* This will update the ProposedChargesAndRestrictionState with status = `REQUEST_TO_ADD_CONSENT_FOR_DISCHARGE`
 
-           ---------------------------------
-           |                               |
+#### STEP: 4
+
+* The Seller's Lender would then provide consent for discharge
+* This will update the ProposedChargesAndRestrictionState with status = `CONSENT_FOR_DISCHARGE`
+
+#### STEP: 5
+
+* The Seller's Conveyancer would then create a Sales contract with the Buyer's Conveyancer
+* This will create a transaction with new LandAgreementState, PaymentConfirmationState issued on both conveyancer's nodes and SettlingParty node
+
+           ---------------------------------                     
+           |                               |       
            |                               |
            |  LandAgreementState           |
            |                               |
            |    - titleID                  |
-           |    - buyer                    |
-           |    - seller                   |
+           |    - buyer                    |            
+           |    - seller                   |                          
            |    - buyerConveyancer         |
            |    - sellerconveyacner        |
            |    - creationDate             |
@@ -155,25 +163,52 @@ The integration test script covers the end to end journey of the CorDapp as desc
            |    - status                   |
            |                               |
            ---------------------------------
+           
+           ----------------------------------
+           |                                |
+           |                                |
+           |  PaymentConfirmationState      |
+           |                                |
+           |    - titleID                   |
+           |    - seller                    |
+           |    - buyer                     |
+           |    - purchasePrice             |
+           |    - landAgreementStateLinearId|
+           |    - settlingParty             |
+           |    - buyerConveyancer          | 
+           |    - status                    |
+           |                                | 
+           ----------------------------------
 
-#### STEP: 4
+
+#### STEP: 6
+
+* The Buyer's conveyancer would then provide consent to add a new charge to the land title
+* This will update the ProposedChargesAndRestrictionState with new charge details and status = `CONSENT_FOR_NEW_CHARGE`
+
+#### STEP: 7
 
 * The Buyer's conveyancer approves the sales contract
 * This will update the LandAgreementState with status = `APPROVED`
 
-#### STEP: 5
+#### STEP: 8
 
 * The Seller signs the sales contract
 * A Smart Contract will verify the seller's signature
 * This will update the LandAgreementState with status = `SIGNED`
 
-#### STEP: 6
+#### STEP: 9
+
+* The Settling Party would then provide confirmation of payment they received from buyer in their escrow account offline
+* This will update the PaymentConfirmationState with status = `CONFIRM_PAYMENT_RECEIVED_IN_ESCROW`
+
+#### STEP: 10
 
 * The Buyer signs the sales contract
 * A Smart Contract will verify the buyer's signature
 * This will update the LandAgreementState with status = `COMPLETED`  
 
-#### STEP: 7
+#### STEP: 11
 
 * The land gets transferred to the buyer on the completion date if all the constraints in the Smart Contract are met
 

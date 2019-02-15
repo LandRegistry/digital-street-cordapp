@@ -219,20 +219,6 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         rpcUsers = [[user: "user1", "password": "test", "permissions": ["ALL"]]]
     }
     node {
-        name "O=Lender2,L=Plymouth,C=GB"
-        p2pPort 10017
-        rpcSettings {
-            address("0.0.0.0:10018")
-            adminAddress("0.0.0.0:10418")
-        }
-        cordapps = [
-                "$project.group:cordapp-contracts-states:$project.version",
-                "$project.group:cordapp-flows:$project.version",
-                "$project.group:cordapp-common:$project.version"
-        ]
-        rpcUsers = [[user: "user1", "password": "test", "permissions": ["ALL"]]]
-    }
-    node {
         name "O=SettlingParty,L=Plymouth,C=GB"
         p2pPort 10020
         rpcSettings {
