@@ -73,7 +73,7 @@ class LandTitleContract: Contract {
         "Issued Land Title should not have any offer price" using(output.lastSoldValue == null)
         "Issued land title number should be equal to the requested title number" using(output.titleID == input.titleID)
         "Owner in the consumed request issuance state and owner in the land title state must be same" using(output.landTitleProperties.owner.equals(input.seller))
-        "Seller Conveyancer in the consumed request issuance state and owner conveyancer in the land title state must be same" using(output.landTitleProperties.ownerConveyancer == input.sellerConveyancer)
+        "Seller Conveyancer and Revenue custom party in the consumed request issuance state and in the land title state must be same" using(output.landTitleProperties.ownerConveyancer == input.sellerConveyancer && output.revenueAndCustom == input.revenueAndCustom)
         "Linear id of the proposed charge and restriction state in the title state must be equal to the linear id of the newly issued state" using(outputProposedChargeAndRestrictionState.linearId.toString() == output.proposedChargeOrRestrictionLinearId)
     }
 
@@ -118,7 +118,7 @@ class LandTitleContract: Contract {
         "New owner must be set to the buyer specified in the agreement state" using (outputLandTitleState.landTitleProperties.owner == inputAgreementState.buyer.copy(signature = outputLandTitleState.landTitleProperties.owner.signature))
         "New owner's conveyancer must be set to the conveyancer specified in agreement state" using (outputLandTitleState.landTitleProperties.ownerConveyancer == inputAgreementState.buyerConveyancer)
         "Last sold value of the land title state must be updated in the output state" using (outputLandTitleState.lastSoldValue == inputAgreementState.purchasePrice)
-        "Transaction must be signed by both the conveyancers, title issuer and settling party" using (setOfSigners.size == 4 && setOfSigners.containsAll(listOf(inputLandTitleState.landTitleProperties.ownerConveyancer.owningKey, inputAgreementState.buyerConveyancer.owningKey, inputLandTitleState.titleIssuer.owningKey, inputPaymentConfirmationState.settlingParty.owningKey)))
+        "Transaction must be signed by both the conveyancers, title issuer, settling party and revenueAndCustom Party" using (setOfSigners.size == 5 && setOfSigners.containsAll(listOf(inputLandTitleState.landTitleProperties.ownerConveyancer.owningKey, inputAgreementState.buyerConveyancer.owningKey, inputLandTitleState.titleIssuer.owningKey, inputPaymentConfirmationState.settlingParty.owningKey, inputLandTitleState.revenueAndCustom.owningKey)))
         "Restrictions in the title state must be equal to the restrictions present in proposed charge and restrictions state" using (outputLandTitleState.charges.toSortedSet().equals(inputProposedChargeAndRestrictionState.charges.toSortedSet()) && outputLandTitleState.restrictions.toSortedSet().equals(inputProposedChargeAndRestrictionState.restrictions.toSortedSet()))
         "Land title state must contain new charges" using (outputLandTitleState.charges.containsAll(inputProposedChargeAndRestrictionState.charges))
         "Old charges should not be removed from the title state" using (outputLandTitleState.charges.containsAll(inputLandTitleState.charges))

@@ -19,6 +19,7 @@ import java.util.*
 data class LandTitleState(val titleID: String,
                           val landTitleProperties: LandTitleProperties,
                           val titleIssuer: Party,
+                          val revenueAndCustom: Party,
                           val titleType: TitleType,
                           val lastSoldValue: Amount<Currency>?,
                           val status: LandTitleStatus,

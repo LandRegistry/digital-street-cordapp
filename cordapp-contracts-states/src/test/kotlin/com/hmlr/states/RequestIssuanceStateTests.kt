@@ -103,4 +103,15 @@ class RequestIssuanceStateTests : AbstractContractsStatesTestUtils() {
         // Is the referenceNumber field of the correct type?
         assertEquals(RequestIssuanceState::class.java.getDeclaredField("status").type, RequestIssuanceStatus::class.java)
     }
+
+    /**
+     * Test 10.
+     */
+    @Test
+    fun `has revenueAndCustom Of Correct Type`() {
+        // Does the revenueAndCustom field exist?
+        RequestIssuanceState::class.java.getDeclaredField("revenueAndCustom")
+        // Is the revenueAndCustom field of the correct type?
+        assertEquals(RequestIssuanceState::class.java.getDeclaredField("revenueAndCustom").type, Party::class.java)
+    }
 }

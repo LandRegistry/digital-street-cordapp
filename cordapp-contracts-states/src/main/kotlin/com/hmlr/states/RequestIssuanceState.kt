@@ -13,6 +13,7 @@ import net.corda.core.identity.Party
 data class RequestIssuanceState(
             val titleID: String,
             val titleIssuer: Party,
+            val revenueAndCustom: Party,
             val sellerConveyancer: Party,
             val seller: CustomParty,
             val status: RequestIssuanceStatus,

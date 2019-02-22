@@ -2,6 +2,7 @@ package com.hmlr.contracts
 
 import com.hmlr.AbstractContractsStatesTestUtils
 import com.hmlr.model.*
+import com.hmlr.utils.BasicSDLT
 import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.testing.node.MockServices
 import net.corda.testing.node.ledger
@@ -17,14 +18,14 @@ class LandAgreementBuyerSignsTests : AbstractContractsStatesTestUtils() {
         val buyerWithSignature = buyer.copy(signature = sign(agreementState.titleID, buyerPrivateKey))
         ledgerServices.ledger {
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementBuyerSignsTests.DummyCommand())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.verifies()
             }
@@ -36,20 +37,20 @@ class LandAgreementBuyerSignsTests : AbstractContractsStatesTestUtils() {
         val buyerWithSignature = buyer.copy(signature = sign(agreementState.titleID, buyerPrivateKey))
         ledgerServices.ledger {
             transaction {
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.verifies()
             }
@@ -61,26 +62,26 @@ class LandAgreementBuyerSignsTests : AbstractContractsStatesTestUtils() {
         val buyerWithSignature = buyer.copy(signature = sign(agreementState.titleID, buyerPrivateKey))
         ledgerServices.ledger {
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.CREATED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.CREATED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.verifies()
             }
@@ -92,20 +93,20 @@ class LandAgreementBuyerSignsTests : AbstractContractsStatesTestUtils() {
         val buyerWithSignature = buyer.copy(signature = sign(agreementState.titleID, buyerPrivateKey))
         ledgerServices.ledger {
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.verifies()
             }
@@ -118,14 +119,14 @@ class LandAgreementBuyerSignsTests : AbstractContractsStatesTestUtils() {
         val buyerWithWrongSignature = seller.copy(signature = sign(agreementState.titleID, wrongBuyerPrivateKey))
         ledgerServices.ledger {
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithWrongSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithWrongSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.verifies()
             }
@@ -137,26 +138,26 @@ class LandAgreementBuyerSignsTests : AbstractContractsStatesTestUtils() {
         val buyerWithSignature = buyer.copy(signature = sign(agreementState.titleID, buyerPrivateKey))
         ledgerServices.ledger {
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.CREATED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.CREATED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.APPROVED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.fails()
             }
             transaction {
-                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true))
-                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true))
+                input(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.SIGNED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
+                output(LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID, agreementState.copy(status = AgreementStatus.COMPLETED, buyer = buyerWithSignature, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(agreementState.purchasePrice)))
                 command(listOf(CHARLIE.publicKey), LandAgreementContract.Commands.BuyerSignAgreement())
                 this.verifies()
             }

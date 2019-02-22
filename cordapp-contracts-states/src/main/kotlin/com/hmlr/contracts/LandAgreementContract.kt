@@ -6,6 +6,7 @@ import net.corda.core.transactions.LedgerTransaction
 import com.hmlr.states.LandTitleState
 import com.hmlr.states.LandAgreementState
 import com.hmlr.states.PaymentConfirmationState
+import com.hmlr.utils.BasicSDLT
 import net.corda.core.crypto.Crypto
 import java.security.PublicKey
 import java.time.Instant
@@ -110,7 +111,9 @@ class LandAgreementContract: Contract {
         "Transaction must be signed by the buyer's conveyancer" using (setOfSigners.size == 1 && setOfSigners.contains(output.buyerConveyancer.owningKey))
         "Output agreement status should be 'APPROVED'" using (output.status == AgreementStatus.APPROVED)
         "isMortgageTermsAdded flag must be true" using(output.isMortgageTermsAdded)
-        "Mismatch in input and output states while approving sales agreement" using (input == output.copy(status = AgreementStatus.CREATED, participants = input.participants, isMortgageTermsAdded = input.isMortgageTermsAdded))
+        "SDLT value in the output agreement state should not be null" using(output.sdlt != null)
+        "Incorrect SDLT value for the given purchase price" using (output.sdlt == BasicSDLT().computeSDLT(input.purchasePrice))
+        "Mismatch in input and output states while approving sales agreement" using (input == output.copy(status = AgreementStatus.CREATED, participants = input.participants, isMortgageTermsAdded = input.isMortgageTermsAdded, sdlt = input.sdlt))
     }
 
     /**
@@ -166,12 +169,12 @@ class LandAgreementContract: Contract {
         val inputPaymentConfirmationState = tx.inputsOfType<PaymentConfirmationState>().single()
 
         val outputAgreementState = tx.outputsOfType<LandAgreementState>().single()
-        "Transaction must be signed by both the conveyancers, title issuer and settling party" using(setOfSigners.size == 4 && setOfSigners.containsAll(listOf(inputAgreementState.sellerConveyancer.owningKey, inputAgreementState.buyerConveyancer.owningKey, inputLandTitleState.titleIssuer.owningKey, inputPaymentConfirmationState.settlingParty.owningKey)))
+        "Transaction must be signed by both the conveyancers, title issuer, settling party and revenueAndCustom Party" using(setOfSigners.size == 5 && setOfSigners.containsAll(listOf(inputAgreementState.sellerConveyancer.owningKey, inputAgreementState.buyerConveyancer.owningKey, inputLandTitleState.titleIssuer.owningKey, inputPaymentConfirmationState.settlingParty.owningKey, inputLandTitleState.revenueAndCustom.owningKey)))
         "Consumed Agreement state must be in 'COMPLETED' state" using(inputAgreementState.status == AgreementStatus.COMPLETED)
         "Produced Agreement state must be in 'TRANSFERRED' state'" using(outputAgreementState.status == AgreementStatus.TRANSFERRED)
         "Title state linearID must be the same as the consumed land title state" using (inputAgreementState.titleStateLinearId == inputLandTitleState.linearId.toString())
         "Land agreement titleID must be the same as the consumed land title state titleID" using (inputAgreementState.titleID == inputLandTitleState.titleID)
         "Mismatch in the input and output LandAgreement state" using(inputAgreementState == outputAgreementState.copy(status = inputAgreementState.status, seller = outputAgreementState.seller.copy(signature = inputAgreementState.seller.signature), buyer = outputAgreementState.buyer.copy(signature = inputAgreementState.buyer.signature), participants = inputAgreementState.participants))
-        "Seller conveyancer, Buyer conveyancer and Settling party must be added to the participants list" using(outputAgreementState.participants.containsAll(inputAgreementState.participants + inputPaymentConfirmationState.settlingParty) && outputAgreementState.participants.size == 3)
+        "Seller conveyancer, Buyer conveyancer, Settling party and Revenue & Custom party must be added to the participants list" using(outputAgreementState.participants.containsAll(inputAgreementState.participants + inputPaymentConfirmationState.settlingParty + inputLandTitleState.revenueAndCustom) && outputAgreementState.participants.size == 4)
     }
 }

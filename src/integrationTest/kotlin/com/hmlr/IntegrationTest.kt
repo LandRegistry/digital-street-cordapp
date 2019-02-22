@@ -4,7 +4,6 @@ import com.hmlr.flows.*
 import com.hmlr.model.*
 import com.hmlr.states.*
 import net.corda.client.rpc.CordaRPCClient
-import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
 import net.corda.core.messaging.vaultTrackBy
@@ -63,14 +62,12 @@ class IntegrationTest: AbstractIntegrationTestUtils() {
                     Permissions.invokeRpc(CordaRPCOps::networkMapFeed)
             ))
          
-            val (hmlrHandle, conveyancerAHandle, conveyancerBHandle, lenderA, settlingPartyHandle) = listOf(
-                    startNode(providedName = HMLR, rpcUsers = listOf(hmlrUser)),
-                    startNode(providedName = ConveyancerA, rpcUsers = listOf(commonUser)),
-                    startNode(providedName = ConveyancerB, rpcUsers = listOf(commonUser)),
-                    startNode(providedName = LenderA, rpcUsers = listOf(commonUser)),
-                    startNode(providedName = SettlingParty, rpcUsers = listOf(commonUser))
-
-            ).map { it.getOrThrow() }
+            val hmlrHandle = startNode(providedName = HMLR, rpcUsers = listOf(hmlrUser)).getOrThrow()
+            val conveyancerAHandle = startNode(providedName = ConveyancerA, rpcUsers = listOf(commonUser)).getOrThrow()
+            val conveyancerBHandle = startNode(providedName = ConveyancerB, rpcUsers = listOf(commonUser)).getOrThrow()
+            val lenderA = startNode(providedName = LenderA, rpcUsers = listOf(commonUser)).getOrThrow()
+            val settlingPartyHandle = startNode(providedName = SettlingParty, rpcUsers = listOf(commonUser)).getOrThrow()
+            val revenueAndCustomHandle = startNode(providedName = RevenueAndCustomParty, rpcUsers = listOf(commonUser)).getOrThrow()
 
             val conveyancerAClient = CordaRPCClient(conveyancerAHandle.rpcAddress)
             val conveyancerAProxy = conveyancerAClient.start("commonUser", "testPassword2").proxy
@@ -84,12 +81,15 @@ class IntegrationTest: AbstractIntegrationTestUtils() {
             val settlingPartyClient = CordaRPCClient(settlingPartyHandle.rpcAddress)
             val settlingPartyProxy = settlingPartyClient.start("commonUser", "testPassword2").proxy
 
+            val revenueAndCustomPartyClient = CordaRPCClient(revenueAndCustomHandle.rpcAddress)
+            val revenueAndCustomProxy = revenueAndCustomPartyClient.start("commonUser", "testPassword2").proxy
+
             val conveyancerAVaultUpdates = conveyancerAProxy.vaultTrackBy<LandTitleState>().updates
 
             // STEP: 1
 
             // call request issuance flow
-            val requestIssuanceState = RequestIssuanceState(titleID = titleId, titleIssuer = hmlrHandle.nodeInfo.legalIdentities[0], seller = seller, sellerConveyancer = conveyancerAHandle.nodeInfo.legalIdentities[0], status = RequestIssuanceStatus.PENDING )
+            val requestIssuanceState = RequestIssuanceState(titleID = titleId, titleIssuer = hmlrHandle.nodeInfo.legalIdentities[0], seller = seller, sellerConveyancer = conveyancerAHandle.nodeInfo.legalIdentities[0], status = RequestIssuanceStatus.PENDING, revenueAndCustom = revenueAndCustomHandle.nodeInfo.legalIdentities[0] )
             conveyancerAProxy.startFlow(::RequestIssuanceFlow, requestIssuanceState)
 
             // listen for LandTitleState update
@@ -122,7 +122,7 @@ class IntegrationTest: AbstractIntegrationTestUtils() {
             landTitleState = conveyancerAProxy.vaultQuery(LandTitleState::class.java)
             landTitleStateLinearId = landTitleState.states[0].state.data.linearId.toString()
             completionDate = Instant.now().plusSeconds(60)
-            var agreementState = LandAgreementState(titleId, buyer, seller, conveyancerBHandle.nodeInfo.legalIdentities.get(0), conveyancerAHandle.nodeInfo.legalIdentities.get(0), creationDate, completionDate!!, 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, landTitleStateLinearId, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false, "")
+            var agreementState = LandAgreementState(titleId, buyer, seller, conveyancerBHandle.nodeInfo.legalIdentities.get(0), conveyancerAHandle.nodeInfo.legalIdentities.get(0), creationDate, completionDate!!, 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, landTitleStateLinearId, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false, null, "")
             conveyancerAProxy.startFlow(::DraftAgreementFlow, agreementState, conveyancerBHandle.nodeInfo.legalIdentities.get(0), settlingPartyHandle.nodeInfo.legalIdentities.get(0))
 
             // wait for 60sec for transaction to get committed on vault
@@ -178,6 +178,9 @@ class IntegrationTest: AbstractIntegrationTestUtils() {
             var landAgreementState = conveyancerBProxy.vaultQuery(LandAgreementState::class.java)
             assertEquals(landAgreementState.states[0].state.data.status, AgreementStatus.TRANSFERRED)
 
+            var landAgreementStateRevenue = revenueAndCustomProxy.vaultQuery(LandAgreementState::class.java)
+            assertEquals(landAgreementStateRevenue.states[0].state.data.status, AgreementStatus.TRANSFERRED)
+
             // transfer the land title back to the seller
 
             // start request for discharge
@@ -202,7 +205,7 @@ class IntegrationTest: AbstractIntegrationTestUtils() {
             landTitleState = conveyancerBProxy.vaultQuery(LandTitleState::class.java)
             landTitleStateLinearId = landTitleState.states[0].state.data.linearId.toString()
             completionDate = Instant.now().plusSeconds(60)
-            agreementState = LandAgreementState(titleId, seller, buyer, conveyancerAHandle.nodeInfo.legalIdentities.get(0), conveyancerBHandle.nodeInfo.legalIdentities.get(0), creationDate, completionDate!!, 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, landTitleStateLinearId, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false, "")
+            agreementState = LandAgreementState(titleId, seller, buyer, conveyancerAHandle.nodeInfo.legalIdentities.get(0), conveyancerBHandle.nodeInfo.legalIdentities.get(0), creationDate, completionDate!!, 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, landTitleStateLinearId, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false, null, "")
             val agreementId = agreementState.linearId.toString()
             conveyancerBProxy.startFlow(::DraftAgreementFlow, agreementState, conveyancerAHandle.nodeInfo.legalIdentities.get(0), settlingPartyHandle.nodeInfo.legalIdentities.get(0))
 

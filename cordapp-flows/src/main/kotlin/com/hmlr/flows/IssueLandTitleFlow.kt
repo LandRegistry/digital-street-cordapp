@@ -18,19 +18,20 @@ import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 import net.corda.core.utilities.ProgressTracker.Step
 import net.corda.core.utilities.unwrap
-import khttp.get
 import net.corda.core.contracts.Amount
 import net.corda.core.identity.CordaX500Name
+import net.corda.core.internal.checkOkResponse
 import net.corda.core.node.ServiceHub
 import net.corda.core.node.services.Vault
 import net.corda.core.node.services.queryBy
 import net.corda.core.node.services.vault.Builder.equal
 import net.corda.core.node.services.vault.QueryCriteria
 import org.json.JSONObject
-import java.io.FileNotFoundException
-import java.io.FileReader
+import java.io.*
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.net.HttpURLConnection
+import java.net.URL
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
@@ -112,7 +113,6 @@ class IssueLandTitleFlow(val flowSession: FlowSession) : FlowLogic<SignedTransac
             // STEP: 5.
             progressTracker.currentStep = SIGNING_TRANSACTION
             val signedTx = serviceHub.signInitialTransaction(tx)
-
 
             // STEP: 6.
             progressTracker.currentStep = FINALISING_LAND_TITLE_ISSUE_TRANSACTION
@@ -222,7 +222,7 @@ class IssueLandTitleFlow(val flowSession: FlowSession) : FlowLogic<SignedTransac
             val owner = CustomParty(
                     forename = ownerJson.getString("first_name"),
                     surname = ownerJson.getString("last_name"),
-                    userID = ownerJson.getInt("identity").toString(),
+                    userID = ownerJson.getString("identity"),
                     address = Address(
                             houseNumber = ownerAddressJson.getString("house_name_number"),
                             streetName = ownerAddressJson.getString("street"),
@@ -259,12 +259,13 @@ class IssueLandTitleFlow(val flowSession: FlowSession) : FlowLogic<SignedTransac
                     status = LandTitleStatus.ISSUED,
                     charges = chargesSet,
                     restrictions = restrictionsSet,
-                    proposedChargeOrRestrictionLinearId = "ERROR IF FOUND"
+                    proposedChargeOrRestrictionLinearId = "ERROR IF FOUND",
+                    revenueAndCustom = outputRequestIssuanceState.revenueAndCustom
             )
             logger.info("Land Title State (${landTitleState.titleID}) successfully created from register data.")
             return landTitleState
         } catch (ex: Exception) {
-            logger.error("ERROR: Unable to convert title api response to LandTitleState")
+            logger.error("ERROR: Unable to convert title api response to LandTitleState:\n${ex.message}")
             throw Exception("Unable to convert title api response to LandTitleState")
         }
     }
@@ -278,17 +279,44 @@ class IssueLandTitleFlow(val flowSession: FlowSession) : FlowLogic<SignedTransac
             throw Exception("There was an reading the title api url from file")
         }
 
-        try {
-            val response = get(titleApiURL + titleID, headers = mapOf("Accept" to "application/json"))
+        val response = StringBuffer()
+        var statusCode = -1
 
-            when {
-                response.statusCode == 200 -> return response.jsonObject
-                response.statusCode == 404 -> throw Exception("Title not found")
-                else -> throw Exception("Title api responded with ${response.statusCode}")
+        try {
+            val url = URL(titleApiURL+titleID+"/lock")
+            with(url.openConnection() as HttpURLConnection) {
+                setRequestProperty("Accept", "application/json")
+                requestMethod = "PUT"
+                readTimeout = 10000
+                connectTimeout = 15000
+                doInput = true
+                doOutput = true
+
+                val wr = OutputStreamWriter(outputStream)
+                wr.flush()
+                checkOkResponse()
+
+                statusCode = responseCode
+                val stream = if (statusCode in 200..299) inputStream else errorStream
+                BufferedReader(InputStreamReader(stream)).use {
+                    var inputLine = it.readLine()
+                    while (inputLine != null) {
+                        response.append(inputLine)
+                        inputLine = it.readLine()
+                    }
+                }
             }
-        } catch(e: Exception) {
-            logger.error("ERROR: There was an error contacting the title api, or the title api returned malformed data. ${e.message}")
-            throw Exception("There was an error contacting the title api, or the title api returned malformed data. ${e.message}")
+
+            when(statusCode) {
+                in 200..299 -> {
+                    return JSONObject(response.toString())
+                }
+                else -> {
+                    throw Exception("Title api responded with ${statusCode}")
+                }
+            }
+        } catch (e: Exception) {
+            throw Exception("Title api responded with ${statusCode}")
         }
     }
 

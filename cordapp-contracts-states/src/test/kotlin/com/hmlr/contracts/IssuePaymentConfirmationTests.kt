@@ -162,7 +162,7 @@ class IssuePaymentConfirmationTests: AbstractContractsStatesTestUtils() {
 
     @Test
     fun `must Be Sent To Settling Party`() {
-        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(buyerConveyancer = LENDER2.party, status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER, participants = proposedChargeOrRestrictionState.participants + CHARLIE.party)
+        val outputProposedChargeAndRestrictionState = proposedChargeOrRestrictionState.copy(buyerConveyancer = LENDER1.party, status = DTCConsentStatus.ASSIGN_BUYER_CONVEYANCER, participants = proposedChargeOrRestrictionState.participants + CHARLIE.party)
         ledgerServices.ledger {
             transaction {
                 input(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleState)

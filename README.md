@@ -106,7 +106,7 @@ The integration test script covers the end to end journey of the CorDapp as desc
            |    - titleType                |
            |    - lastSoldValue            |
            |    - status                   |
-           |                               | 
+           |                               |
            ---------------------------------
        
            ---------------------------------------
@@ -123,6 +123,22 @@ The integration test script covers the end to end journey of the CorDapp as desc
            |                                     |  
            |                                     |
            |                                     | 
+           ---------------------------------------
+
+           ---------------------------------------
+           |                                     |
+           |                                     |
+           |  ProposedChargesAndRestrictionsState|
+           |                                     |
+           |    - titleID                        |
+           |    - ownerConveyancer               |
+           |    - buyerConveyancer               |
+           |    - restrictions                   |
+           |    - charges                        |
+           |    - status                         |
+           |                                     |  
+           |                                     |
+           |                                     |
            ---------------------------------------
 
 #### STEP: 3
@@ -178,6 +194,23 @@ The integration test script covers the end to end journey of the CorDapp as desc
            |    - buyerConveyancer          | 
            |    - status                    |
            |                                | 
+           ----------------------------------
+
+
+           ----------------------------------
+           |                                |
+           |                                |
+           |  PaymentConfirmationState      |
+           |                                |
+           |    - titleID                   |
+           |    - seller                    |
+           |    - buyer                     |
+           |    - purchasePrice             |
+           |    - landAgreementStateLinearId|
+           |    - settlingParty             |
+           |    - buyerConveyancer          |
+           |    - status                    |
+           |                                |
            ----------------------------------
 
 

@@ -81,7 +81,7 @@ class InitiateLandTitleTransferFlow(val ref: StateRef): FlowLogic<Unit>(), FlowL
                 val newRestrictionStatus = serviceHub.updateRestrictions(chargeAndRestrictionState.restrictions, ActionOnRestriction.NO_ACTION,false)
                 val newOwner = agreementState.buyer
                 val newLandTitleOutputState = landTitleState.copy(status = LandTitleStatus.TRANSFERRED, landTitleProperties = landTitleState.landTitleProperties.copy(ownerConveyancer = agreementState.buyerConveyancer, owner = newOwner), lastSoldValue = agreementState.purchasePrice, restrictions = newRestrictionStatus, participants = listOf(agreementState.sellerConveyancer, agreementState.buyerConveyancer, landTitleState.titleIssuer, landTitleState.landTitleProperties.ownerLender), charges = chargeAndRestrictionState.charges)
-                val newAgreementState = agreementState.copy(status = AgreementStatus.TRANSFERRED, participants = agreementState.participants + paymentConfirmationState.state.data.settlingParty)
+                val newAgreementState = agreementState.copy(status = AgreementStatus.TRANSFERRED, participants = agreementState.participants + paymentConfirmationState.state.data.settlingParty + landTitleState.revenueAndCustom)
                 val newChargeAndRestrictionState = chargeAndRestrictionState.copy(ownerConveyancer = chargeAndRestrictionState.buyerConveyancer!!, buyerConveyancer = null, status = DTCConsentStatus.ISSUED, restrictions = newRestrictionStatus, participants = listOf(agreementState.sellerConveyancer, agreementState.buyerConveyancer, landTitleState.titleIssuer, landTitleState.landTitleProperties.ownerLender))
                 val newPaymentConfirmationState = paymentConfirmationState.state.data.copy(status = PaymentConfirmationStatus.CONFIRM_FUNDS_RELEASED)
 
@@ -98,10 +98,10 @@ class InitiateLandTitleTransferFlow(val ref: StateRef): FlowLogic<Unit>(), FlowL
                 tx.addOutputState(newPaymentConfirmationState, PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID)
 
                 // add commands
-                val landTransferCommand = Command(LandTitleContract.Commands.TransferLandTitle(), listOf(agreementState.buyerConveyancer.owningKey, agreementState.sellerConveyancer.owningKey, landTitleState.titleIssuer.owningKey, newPaymentConfirmationState.settlingParty.owningKey))
-                val agreementFinalizeCommand = Command(LandAgreementContract.Commands.FinalizeAgreement(), listOf(landTitleState.landTitleProperties.ownerConveyancer.owningKey, agreementState.buyerConveyancer.owningKey, landTitleState.titleIssuer.owningKey, newPaymentConfirmationState.settlingParty.owningKey))
-                val issueChargeRestriction = Command(ProposedChargeAndRestrictionContract.Commands.TransferLandTitle() ,listOf(agreementState.buyerConveyancer.owningKey, agreementState.sellerConveyancer.owningKey, landTitleState.titleIssuer.owningKey, newPaymentConfirmationState.settlingParty.owningKey))
-                val confirmFundsReleasedCommand = Command(PaymentConfirmationContract.Commands.ConfirmFundsReleased() ,listOf(agreementState.buyerConveyancer.owningKey, agreementState.sellerConveyancer.owningKey, landTitleState.titleIssuer.owningKey, newPaymentConfirmationState.settlingParty.owningKey))
+                val landTransferCommand = Command(LandTitleContract.Commands.TransferLandTitle(), listOf(agreementState.buyerConveyancer.owningKey, agreementState.sellerConveyancer.owningKey, landTitleState.titleIssuer.owningKey, newPaymentConfirmationState.settlingParty.owningKey, landTitleState.revenueAndCustom.owningKey))
+                val agreementFinalizeCommand = Command(LandAgreementContract.Commands.FinalizeAgreement(), listOf(landTitleState.landTitleProperties.ownerConveyancer.owningKey, agreementState.buyerConveyancer.owningKey, landTitleState.titleIssuer.owningKey, newPaymentConfirmationState.settlingParty.owningKey, landTitleState.revenueAndCustom.owningKey))
+                val issueChargeRestriction = Command(ProposedChargeAndRestrictionContract.Commands.TransferLandTitle() ,listOf(agreementState.buyerConveyancer.owningKey, agreementState.sellerConveyancer.owningKey, landTitleState.titleIssuer.owningKey, newPaymentConfirmationState.settlingParty.owningKey, landTitleState.revenueAndCustom.owningKey))
+                val confirmFundsReleasedCommand = Command(PaymentConfirmationContract.Commands.ConfirmFundsReleased() ,listOf(agreementState.buyerConveyancer.owningKey, agreementState.sellerConveyancer.owningKey, landTitleState.titleIssuer.owningKey, newPaymentConfirmationState.settlingParty.owningKey, landTitleState.revenueAndCustom.owningKey))
 
                 tx.addCommand(landTransferCommand)
                 tx.addCommand(agreementFinalizeCommand)
@@ -120,7 +120,8 @@ class InitiateLandTitleTransferFlow(val ref: StateRef): FlowLogic<Unit>(), FlowL
                 val counterPartySession = initiateFlow(counterparty)
                 val titleIssuerPartySession = initiateFlow(newLandTitleOutputState.titleIssuer)
                 val settlingPartySession = initiateFlow(newPaymentConfirmationState.settlingParty)
-                val fullySignedTx = subFlow(CollectSignaturesFlow(partSignedTx, setOf(counterPartySession, titleIssuerPartySession, settlingPartySession), COLLECTING_SIGNATURE_FROM_COUNTERPARTY.childProgressTracker()))
+                val revenueAndCustomPartySession = initiateFlow(newLandTitleOutputState.revenueAndCustom)
+                val fullySignedTx = subFlow(CollectSignaturesFlow(partSignedTx, setOf(counterPartySession, titleIssuerPartySession, settlingPartySession, revenueAndCustomPartySession), COLLECTING_SIGNATURE_FROM_COUNTERPARTY.childProgressTracker()))
 
                 progressTracker.currentStep = FINALISING_TRANSACTION
                 subFlow(FinalityFlow(fullySignedTx, FINALISING_TRANSACTION.childProgressTracker()))

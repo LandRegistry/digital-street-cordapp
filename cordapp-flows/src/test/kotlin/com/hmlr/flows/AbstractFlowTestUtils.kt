@@ -18,6 +18,7 @@ import java.security.PrivateKey
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import com.hmlr.utils.BasicSDLT
 
 /**
  * A base class to reduce the boilerplate when writing land title flow tests.
@@ -43,8 +44,8 @@ abstract class AbstractFlowTestUtils {
     val caseRefNum = "ABCD123"
     val invalidTitleId = "0000000000"
     val location = Address("10", "Digital Street", "Bristol", "Bristol", "England", "BS2 8EN")
-    val seller = CustomParty("Lisa", "White", "1", location, UserType.INDIVIDUAL, "lisa.white@example.com", "07700900354", true, signature = null, publicKey = sellerPublicKey)
-    val buyer = CustomParty("David", "Jones", "125464", location, UserType.INDIVIDUAL, "buyer@example.com", "0123456789", true, signature = null, publicKey = buyerPublicKey)
+    val seller = CustomParty("Lisa", "White", "1", location, UserType.INDIVIDUAL, "lisa.white@example.com", "+447700900354", true, signature = null, publicKey = sellerPublicKey)
+    val buyer = CustomParty("David", "Jones", "125464", location, UserType.INDIVIDUAL, "buyer@example.com", "+447700900354", true, signature = null, publicKey = buyerPublicKey)
     var completionDate: Instant? = null
     val creationDate = LocalDate.now()
 
@@ -78,11 +79,10 @@ abstract class AbstractFlowTestUtils {
 
 
     protected fun requestForIssuance() : SignedTransaction? {
-
         val issuer = issuer.info.singleIdentity()
         val conveyancer = sellerConveyancer.info.singleIdentity()
 
-        val requestIssuanceState = RequestIssuanceState(titleId, issuer, conveyancer, seller, RequestIssuanceStatus.PENDING)
+        val requestIssuanceState = RequestIssuanceState(titleId, issuer, hmrc.info.singleIdentity(), conveyancer, seller, RequestIssuanceStatus.PENDING)
         val flow = RequestIssuanceFlow(requestIssuanceState)
         val future = sellerConveyancer.startFlow(flow)
         val signdTx = future.getOrThrow()
@@ -94,7 +94,7 @@ abstract class AbstractFlowTestUtils {
         val issuer = issuer.info.singleIdentity()
         val conveyancer = sellerConveyancer.info.singleIdentity()
 
-        val requestIssuanceState = RequestIssuanceState(invalidTitleId, issuer, conveyancer, seller, RequestIssuanceStatus.PENDING)
+        val requestIssuanceState = RequestIssuanceState(invalidTitleId, issuer,  hmrc.info.singleIdentity(), conveyancer, seller, RequestIssuanceStatus.PENDING)
         val flow = RequestIssuanceFlow(requestIssuanceState)
         val future = sellerConveyancer.startFlow(flow)
         val signdTx = future.getOrThrow()
@@ -119,7 +119,7 @@ abstract class AbstractFlowTestUtils {
         }
         val ownerConveyancer = sellerConveyancer.info.singleIdentity()
         val buyerConveyancer = buyerConveyancer.info.singleIdentity()
-        val agreementState = LandAgreementState(titleId, buyer, owner!!, buyerConveyancer, ownerConveyancer, creationDate, completionDate!!, 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, titleID!!, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false, "")
+        val agreementState = LandAgreementState(titleId, buyer, owner!!, buyerConveyancer, ownerConveyancer, creationDate, completionDate!!, 9.0, 1000.POUNDS, 50.POUNDS, null, 950.POUNDS, titleID!!, listOf(), TitleGuarantee.FULL, AgreementStatus.CREATED, false, null, "")
         val flow = DraftAgreementFlow(agreementState, buyerConveyancer, settlingParty.info.singleIdentity())
         val future = callingParty.startFlow(flow)
         return future.getOrThrow()

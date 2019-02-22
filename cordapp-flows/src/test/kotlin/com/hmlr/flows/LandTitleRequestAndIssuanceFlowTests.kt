@@ -59,7 +59,7 @@ class LandTitleRequestAndIssuanceFlowTests : AbstractFlowTestUtils() {
     fun `request for land title issuance can only made by conveyancer`() {
         val titleIssuer = issuer.info.singleIdentity()
         val conveyancer = sellerConveyancer.info.singleIdentity()
-        val requestIssuanceState = RequestIssuanceState(titleId, titleIssuer, conveyancer, seller, RequestIssuanceStatus.PENDING)
+        val requestIssuanceState = RequestIssuanceState(titleId, titleIssuer, hmrc.info.singleIdentity(), conveyancer, seller, RequestIssuanceStatus.PENDING)
         val flow = RequestIssuanceFlow(requestIssuanceState)
         val future = issuer.startFlow(flow)
         assertFailsWith<SignedTransaction.SignaturesMissingException> { future.getOrThrow() }
@@ -68,7 +68,7 @@ class LandTitleRequestAndIssuanceFlowTests : AbstractFlowTestUtils() {
     @Test
     fun `title issuer and requesting party cannot be same` () {
         val conveyancer = sellerConveyancer.info.singleIdentity()
-        val requestIssuanceState = RequestIssuanceState(titleId, conveyancer, conveyancer, seller, RequestIssuanceStatus.PENDING)
+        val requestIssuanceState = RequestIssuanceState(titleId, conveyancer, conveyancer, hmrc.info.singleIdentity(), seller, RequestIssuanceStatus.PENDING)
         val flow = RequestIssuanceFlow(requestIssuanceState)
         val future =sellerConveyancer.startFlow(flow)
         assertFailsWith<TransactionVerificationException> { future.getOrThrow() }

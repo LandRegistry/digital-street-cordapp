@@ -8,12 +8,17 @@ import com.hmlr.model.AgreementStatus
 import com.hmlr.model.PaymentConfirmationStatus
 import com.hmlr.states.LandAgreementState
 import com.hmlr.states.PaymentConfirmationState
+import com.hmlr.utils.BasicSDLT
+import com.hmlr.utils.SDLTCalculator
+import net.corda.core.contracts.Amount
 import net.corda.core.contracts.Command
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
+import net.corda.finance.POUNDS
+import java.util.*
 
 
 /**
@@ -66,13 +71,13 @@ class ApproveAgreementFlow(val agreementStateLinearId: String
         tx.addInputState(paymentConfirmationStateAndRef)
 
         val landAgreementOutputState = landAgreementStateAndRef.state.data
-        val newLandAgreementOutputState = landAgreementOutputState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true)
+        val newLandAgreementOutputState = landAgreementOutputState.copy(status = AgreementStatus.APPROVED, isMortgageTermsAdded = true, sdlt = BasicSDLT().computeSDLT(landAgreementOutputState.purchasePrice))
 
         val paymentConfirmationOutputState = paymentConfirmationStateAndRef.state.data
-        val newPaymentConfirmationOutputStatee = paymentConfirmationOutputState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT)
+        val newPaymentConfirmationOutputState = paymentConfirmationOutputState.copy(status = PaymentConfirmationStatus.REQUEST_FOR_PAYMENT)
 
         tx.addOutputState(newLandAgreementOutputState, LandAgreementContract.LAND_AGREEMENT_CONTRACT_ID)
-        tx.addOutputState(newPaymentConfirmationOutputStatee, PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID)
+        tx.addOutputState(newPaymentConfirmationOutputState, PaymentConfirmationContract.PAYMENT_CONFIRMATION_CONTRACT_ID)
 
         val approveAgreementCommand = Command(LandAgreementContract.Commands.ApproveSalesAgreement(), landAgreementOutputState.buyerConveyancer.owningKey)
         tx.addCommand(approveAgreementCommand)

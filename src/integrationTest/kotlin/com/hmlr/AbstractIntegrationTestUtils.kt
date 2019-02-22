@@ -14,6 +14,7 @@ abstract class AbstractIntegrationTestUtils {
     val ConveyancerB = CordaX500Name("Conveyancer2", "Plymouth", "GB")
     val LenderA = CordaX500Name("Lender1", "Plymouth", "GB")
     val SettlingParty = CordaX500Name("SettlingParty", "Plymouth", "GB")
+    val RevenueAndCustomParty = CordaX500Name("HMRC", "Plymouth", "GB")
     val buyerKeys = Crypto.generateKeyPair(Crypto.RSA_SHA256)
     val sellerKeys = Crypto.generateKeyPair(Crypto.RSA_SHA256)
     val buyerPublicKey = buyerKeys.public
@@ -23,8 +24,8 @@ abstract class AbstractIntegrationTestUtils {
     val titleId = "ZQV888860"
     val caseRefNum = "ABCD123"
     val location = Address("10", "Digital Street", "Bristol", "Bristol", "England", "BS2 8EN")
-    val seller = CustomParty("Lisa", "White", "1", location, UserType.INDIVIDUAL, "lisa.white@example.com", "07700900354", true, signature = null, publicKey = sellerPublicKey)
-    val buyer = CustomParty("David", "Jones", "125464", location, UserType.INDIVIDUAL, "buyer@example.com", "0123456789", true, signature = null, publicKey = buyerPublicKey)
+    val seller = CustomParty("Lisa", "White", "1", location, UserType.INDIVIDUAL, "lisa.white@example.com", "+447700900354", true, signature = null, publicKey = sellerPublicKey)
+    val buyer = CustomParty("David", "Jones", "125464", location, UserType.INDIVIDUAL, "buyer@example.com", "+447700900354", true, signature = null, publicKey = buyerPublicKey)
     var completionDate: Instant? = null
     val creationDate = LocalDate.now()
     val restrictionText = "No disposition of the registered estate by the proprietor of the registered estate is to be registered"

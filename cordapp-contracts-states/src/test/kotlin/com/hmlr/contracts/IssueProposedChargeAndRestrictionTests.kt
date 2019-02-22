@@ -259,7 +259,7 @@ class IssueProposedChargeAndRestrictionTests : AbstractContractsStatesTestUtils(
         val outputIssuanceRequestState = requestIssuanceState.copy(status = RequestIssuanceStatus.APPROVED)
         ledgerServices.ledger {
             transaction {
-                val restriction = ChargeRestriction("CBCR", restrictionText, LENDER2.party, ActionOnRestriction.NO_ACTION, false, charge)
+                val restriction = ChargeRestriction("CBCR", restrictionText, CHARLIE.party, ActionOnRestriction.NO_ACTION, false, charge)
                 input(RequestIssuanceContract.REQUEST_ISSUANCE_CONTRACT_ID, requestIssuanceState)
                 output(RequestIssuanceContract.REQUEST_ISSUANCE_CONTRACT_ID, outputIssuanceRequestState)
                 output(LandTitleContract.LAND_TITLE_CONTRACT_ID, landTitleState)

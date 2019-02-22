@@ -62,7 +62,7 @@ class RequestIssuanceContract: Contract {
     private fun verifyRequestIssuance(tx: LedgerTransaction, setOfSigners: Set<PublicKey>) = requireThat{
         "There should be exactly one output state when requesting issuance of a title on the ledger" using(tx.outputs.size == 1)
         val output = tx.outputsOfType<RequestIssuanceState>().single()
-        "Issuing party and conveyancer party must be different when requesting issuance of a title on the ledger" using (output.titleIssuer != output.sellerConveyancer)
+        "Issuing party, conveyancer party and revenueAndCustom party must be different when requesting issuance of a title on the ledger" using (output.titleIssuer != output.sellerConveyancer && output.sellerConveyancer != output.revenueAndCustom && output.revenueAndCustom != output.titleIssuer)
         "Request for issuance must only be signed by the conveyancer" using(setOfSigners.contains((output.sellerConveyancer.owningKey)) && setOfSigners.size == 1)
         "Only title issuer and conveyancer must be added to the list of participants when requesting issuance of a title on the ledger" using(output.participants.containsAll(listOf(output.sellerConveyancer, output.titleIssuer)) && output.participants.size == 2)
         "Request issuance status must be 'PENDING' when requesting issuance of a title on the ledger" using(output.status == RequestIssuanceStatus.PENDING)

@@ -177,4 +177,16 @@ class LandTitleStateTests : AbstractContractsStatesTestUtils() {
         // Is the proposedChargeOrRestrictionLinearId field of the correct type?
         assertEquals(propClass, String::class.java)
     }
+
+    /**
+     * Test 15.
+     *
+     */
+    @Test
+    fun `has revenueAndCustom Field Of Correct Type`() {
+        // Does the revenueAndCustom field exist?
+        LandTitleState::class.java.getDeclaredField("revenueAndCustom")
+        // Is the revenueAndCustom field of the correct type?
+        assertEquals(LandTitleState::class.java.getDeclaredField("revenueAndCustom").type, Party::class.java)
+    }
 }

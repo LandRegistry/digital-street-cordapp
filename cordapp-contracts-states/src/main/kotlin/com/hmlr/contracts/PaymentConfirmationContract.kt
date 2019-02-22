@@ -142,7 +142,7 @@ class PaymentConfirmationContract: Contract {
         val inputAgreementState = tx.inputsOfType<LandAgreementState>().single()
         val inputLandTitleState = tx.inputsOfType<LandTitleState>().single()
 
-        "Transaction must be signed by both the conveyancers, title issuer and settling party" using(setOfSigners.size == 4 && setOfSigners.containsAll(listOf(inputAgreementState.sellerConveyancer.owningKey, inputAgreementState.buyerConveyancer.owningKey, inputLandTitleState.titleIssuer.owningKey, inputPaymentConfirmationState.settlingParty.owningKey)))
+        "Transaction must be signed by both the conveyancers, title issuer, settling party and revenueAndCustom Party" using(setOfSigners.size == 5 && setOfSigners.containsAll(listOf(inputAgreementState.sellerConveyancer.owningKey, inputAgreementState.buyerConveyancer.owningKey, inputLandTitleState.titleIssuer.owningKey, inputPaymentConfirmationState.settlingParty.owningKey, inputLandTitleState.revenueAndCustom.owningKey)))
         "Status of input payment confirmation state must be 'CONFIRM_PAYMENT_RECEIVED_IN_ESCROW'" using(inputPaymentConfirmationState.status == PaymentConfirmationStatus.CONFIRM_PAYMENT_RECEIVED_IN_ESCROW)
         "Status of output payment confirmation state must be set to 'CONFIRM_FUNDS_RELEASED'" using(outputPaymentConfirmationState.status == PaymentConfirmationStatus.CONFIRM_FUNDS_RELEASED)
         val invariantRestrictionProperties = setOf(
